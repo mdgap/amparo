@@ -9,6 +9,7 @@ import {
   versaoDaTabela,
 } from "../src/domain/cmed.ts";
 import type { Parametros } from "../src/domain/parametros.ts";
+import { PARAMETROS, tetoEmReais } from "../src/domain/parametros.ts";
 import type { Medicamento, Posologia } from "../src/domain/types.ts";
 
 const P: Parametros = {
@@ -68,6 +69,15 @@ test("exatamente no piso de 7 SM fica na faixa de ressarcimento", () => {
   assert.equal(r.faixa, "ressarcimento_federal");
 });
 
+test("um centavo abaixo do piso fica abaixo do piso mesmo exibindo 7,00 SM", () => {
+  // 13 caixas x R$ 538,4607... = R$ 6.999,99 → 6,99999 SM, exibido como 7,00
+  const centavoAbaixo = { ...medBase, precoApresentacao: 6999.99 / 13 };
+  const r = definirRota(centavoAbaixo, contínuo, P);
+  assert.equal(r.custo.custoAnual, 6999.99);
+  assert.equal(r.custo.emSalariosMinimos, 7);
+  assert.equal(r.faixa, "abaixo_do_piso");
+});
+
 test("Município fora do polo por não incorporado, salvo pactuação na CIB", () => {
   const semPactuacao = definirRota(medBase, contínuo, P);
   assert.ok(!semPactuacao.poloPassivo.includes("Município"));
@@ -88,13 +98,34 @@ test("acima de 210 SM vai para a Justiça Federal com a União", () => {
   assert.deepEqual(r.poloPassivo, ["União"]);
 });
 
-test("exatamente no teto permanece na Justiça Estadual", () => {
+test("exatamente no teto vai para a Justiça Federal (igual ou superior a 210 SM)", () => {
   // 210 SM = R$ 210.000 → 13 caixas de R$ 16.153,846...
   const noTeto = { ...medBase, precoApresentacao: 210000 / 13 };
   const r = definirRota(noTeto, contínuo, P);
   assert.equal(r.custo.emSalariosMinimos, 210);
-  assert.equal(r.justica, "estadual");
+  assert.equal(r.justica, "federal");
+  assert.equal(r.faixa, "acima_do_teto");
+  assert.deepEqual(r.poloPassivo, ["União"]);
   assert.equal(r.zonaDeAtencao, true);
+});
+
+test("um centavo abaixo do teto fica na Estadual mesmo exibindo 210,00 SM", () => {
+  // 13 caixas x R$ 16.153,845384... = R$ 209.999,99 → 209,99999 SM, exibido como 210,00
+  const centavoAbaixo = { ...medBase, precoApresentacao: 209999.99 / 13 };
+  const r = definirRota(centavoAbaixo, contínuo, P);
+  assert.equal(r.custo.custoAnual, 209999.99);
+  assert.equal(r.custo.emSalariosMinimos, 210);
+  assert.equal(r.justica, "estadual");
+  assert.equal(r.faixa, "ressarcimento_federal");
+});
+
+test("logo abaixo do teto fica na Justiça Estadual", () => {
+  // 209 SM = R$ 209.000 → 13 caixas
+  const abaixo = { ...medBase, precoApresentacao: 209000 / 13 };
+  const r = definirRota(abaixo, contínuo, P);
+  assert.equal(r.justica, "estadual");
+  assert.equal(r.faixa, "ressarcimento_federal");
+  assert.deepEqual(r.poloPassivo, ["Estado"]);
 });
 
 test("sem registro na ANVISA vai para a Justiça Federal mesmo barato", () => {
@@ -356,4 +387,11 @@ test("null do modelo é tratado como campo ausente", () => {
   );
   // Campo preenchido não é tocado.
   assert.deepEqual(semNulos({ a: "x", b: [1, null, 2] }), { a: "x", b: [1, 2] });
+});
+
+test("parâmetros vigentes apontam para a norma que os fixa", () => {
+  assert.equal(PARAMETROS.salarioMinimo.valorMensal, 1621);
+  assert.equal(PARAMETROS.salarioMinimo.vigenciaDesde, "2026-01-01");
+  assert.match(PARAMETROS.salarioMinimo.fonte, /Decreto nº 12\.797/);
+  assert.equal(tetoEmReais(), 340410); // 210 x R$ 1.621,00
 });
