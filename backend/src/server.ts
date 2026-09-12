@@ -29,6 +29,15 @@ app.setErrorHandler((erro: Error & { statusCode?: number }, req, reply) => {
   });
 });
 
+/**
+ * Rota inexistente também responde no formato que a interface lê. Sem isso, um
+ * 404 — servidor desatualizado, rota ainda não registrada — chegava na tela
+ * como a mensagem genérica de falha, escondendo a causa.
+ */
+app.setNotFoundHandler((req, reply) => {
+  reply.code(404).send({ erro: `Rota não encontrada: ${req.method} ${req.url}` });
+});
+
 app.get("/health", async () => ({ ok: true }));
 
 await app.listen({ port: env.PORT, host: "0.0.0.0" });

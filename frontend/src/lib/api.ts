@@ -145,8 +145,18 @@ export const api = {
     const form = new FormData();
     form.append("arquivo", arquivo);
     const r = await fetch("/api/documento", { method: "POST", body: form });
-    const json = await r.json();
-    if (!r.ok) throw new Error(json.erro ?? "Falha ao ler o documento");
+    // Nem toda resposta é JSON: o nginx recusa arquivo grande com HTML.
+    const bruto = await r.text();
+    let json: { erro?: string; [k: string]: unknown };
+    try {
+      json = JSON.parse(bruto);
+    } catch {
+      throw new Error(
+        `O servidor respondeu ${r.status} sem detalhe. ` +
+          (r.status === 413 ? "O arquivo é grande demais." : "Verifique se a API está no ar."),
+      );
+    }
+    if (!r.ok) throw new Error(json.erro ?? `Falha ao ler o documento (${r.status})`);
     return json as {
       origem: "texto-do-pdf" | "ocr";
       texto: string;
