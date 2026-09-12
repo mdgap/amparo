@@ -59,6 +59,29 @@ BRASILEIROS = [
         patterns=[Pattern("crm", r"\bCRM[\s/-]*[A-Z]{0,2}[\s:/-]*\d{4,6}\b", 0.93)],
         context=["crm", "médico"],
     ),
+]
+
+# Nome ao lado do rótulo. Texto vindo de PDF chega como uma linha só, e
+# sem quebra o modelo perde o contexto que usa para reconhecer pessoa —
+# foi assim que "Paciente Fulano de Tal" escapou numa nota do e-NatJus.
+# O rótulo, ao contrário, é literal e não depende de contexto nenhum.
+BRASILEIROS += [
+    PatternRecognizer(
+        name=f"NomeApos{rotulo}",
+        supported_entity="PERSON",
+        supported_language=IDIOMA,
+        patterns=[
+            Pattern(
+                f"nome apos {rotulo}",
+                rf"(?<=\b{rotulo}\s)[A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][\wÀ-ÿ]+(?:\s+(?:d[aeo]s?|e)\s+[A-ZÁÂÃÀÉÊÍÓÔÕÚÇ]?[\wÀ-ÿ]+|\s+[A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][\wÀ-ÿ]+){{1,5}}",
+                0.9,
+            )
+        ],
+    )
+    for rotulo in ("Paciente", "Requerente", "Demandante", "Autora", "Beneficiária")
+]
+
+BRASILEIROS += [
     PatternRecognizer(
         supported_entity="BR_TELEFONE",
         supported_language=IDIOMA,

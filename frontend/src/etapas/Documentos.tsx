@@ -146,7 +146,7 @@ function CampoDocumento({
       </div>
       <p className="mb-4 text-sm text-muted">{ajuda}</p>
 
-      {buscaNatJus && <BuscaNatJus />}
+      {buscaNatJus && <BuscaNatJus onImportar={onMudar} />}
 
       <div
         className={`mb-3 flex items-center justify-center gap-3 rounded-xl border border-dashed px-4 py-4 text-sm transition-colors

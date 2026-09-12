@@ -260,6 +260,13 @@ export const api = {
       paginas: number;
     };
   },
+  /** Conteúdo de uma nota, já anonimizado e pronto para o campo. */
+  notaNatjus: async (id: number) => {
+    const r = await fetch(`/api/natjus/${id}`);
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.erro ?? "Falha ao importar a nota");
+    return json as { texto: string; removidos: Record<string, number> };
+  },
   cmed: async (q: string) => {
     const r = await fetch(`/api/cmed?q=${encodeURIComponent(q)}`);
     const json = await r.json();

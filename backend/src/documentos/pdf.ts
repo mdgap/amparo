@@ -58,6 +58,10 @@ export async function extrairTextoDePdf(arquivo: Uint8Array): Promise<TextoExtra
       .map((i) => ("str" in i ? i.str : ""))
       .join(" ")
       .replace(/[ \t]+/g, " ")
+      // Quebra antes de item numerado ("2.1.", "4."): o PDF vem como uma
+      // linha só, e sem estrutura o reconhecimento de nome próprio piora
+      // muito — é assim que nome de paciente escapa da anonimização.
+      .replace(/\s(?=\d{1,2}(?:\.\d{1,2})*\.?\s+[A-ZÁ-Ú])/g, "\n")
       .trim();
     if (linha) partes.push(linha);
   }

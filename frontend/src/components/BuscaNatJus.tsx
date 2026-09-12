@@ -14,12 +14,36 @@ type Nota = { id: number; cid: string; uf: string; finalizadaEm: string; url: st
  * A escolha da nota é dele: o CID da nota é que a aproxima ou afasta do caso, e
  * isso é juízo clínico-jurídico, não automação.
  */
-export function BuscaNatJus() {
+export function BuscaNatJus({ onImportar }: { onImportar: (texto: string) => void }) {
   const [termo, setTermo] = useState("");
   const [notas, setNotas] = useState<Nota[] | null>(null);
   const [total, setTotal] = useState(0);
   const [buscando, setBuscando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [importando, setImportando] = useState<number | null>(null);
+  const [importada, setImportada] = useState<string | null>(null);
+
+  /**
+   * Traz o conteúdo da nota para o campo. A nota é pública, mas traz o nome do
+   * paciente daquele processo — o servidor anonimiza antes de devolver, e o
+   * placar do que saiu aparece aqui.
+   */
+  async function importar(id: number) {
+    setImportando(id);
+    setErro(null);
+    try {
+      const r = await api.notaNatjus(id);
+      onImportar(r.texto);
+      const total = Object.values(r.removidos).reduce((a, b) => a + b, 0);
+      setImportada(
+        `Nota ${id} importada${total ? ` — ${total} dado(s) pessoal(is) do processo de origem foram substituídos por marcador.` : "."}`,
+      );
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Falha ao importar a nota.");
+    } finally {
+      setImportando(null);
+    }
+  }
 
   async function buscar() {
     if (termo.trim().length < 3) {
@@ -56,6 +80,7 @@ export function BuscaNatJus() {
       </div>
 
       {erro && <p className="mt-3 text-sm text-[var(--status-erro-fg)]">{erro}</p>}
+      {importada && <p className="mt-3 text-sm text-[var(--status-ok-fg)]">{importada}</p>}
 
       {notas?.length === 0 && (
         <p className="mt-3 text-sm text-muted">
@@ -71,9 +96,9 @@ export function BuscaNatJus() {
           </p>
           <ul className="mt-3 flex max-h-64 flex-col gap-2 overflow-y-auto">
             {notas.map((n) => (
-              <li key={n.id}>
+              <li key={n.id} className="flex flex-wrap items-center gap-2">
                 <a
-                  className="controle flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[var(--border)] bg-surface px-4 py-2 text-sm hover:bg-[var(--surface-tertiary)]"
+                  className="controle flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[var(--border)] bg-surface px-4 py-2 text-sm hover:bg-[var(--surface-tertiary)]"
                   href={n.url}
                   rel="noreferrer"
                   target="_blank"
@@ -83,6 +108,16 @@ export function BuscaNatJus() {
                   <span className="text-muted">NatJus {n.uf}</span>
                   <span className="num text-muted">{n.finalizadaEm}</span>
                 </a>
+                <Button
+                  className="controle shrink-0"
+                  isPending={importando === n.id}
+                  size="sm"
+                  variant="secondary"
+                  onPress={() => void importar(n.id)}
+                >
+                  {importando === n.id ? <Spinner size="sm" /> : null}
+                  Usar esta
+                </Button>
               </li>
             ))}
           </ul>
