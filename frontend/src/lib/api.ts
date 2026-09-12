@@ -134,6 +134,20 @@ export const api = {
         evidencias: string[];
       };
     }>("/reconhecer", { laudo, receita }),
+  documento: async (arquivo: File) => {
+    const form = new FormData();
+    form.append("arquivo", arquivo);
+    const r = await fetch("/api/documento", { method: "POST", body: form });
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.erro ?? "Falha ao ler o documento");
+    return json as {
+      origem: "texto-do-pdf" | "ocr";
+      texto: string;
+      paginas: number;
+      confianca?: number;
+      precisaConferencia: boolean;
+    };
+  },
   cmed: async (q: string) => {
     const r = await fetch(`/api/cmed?q=${encodeURIComponent(q)}`);
     const json = await r.json();

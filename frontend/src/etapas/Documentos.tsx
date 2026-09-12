@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Alert, Button, TextArea } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
 import { IconeOk, IconeSeta, IconeUpload } from "../components/Icones.tsx";
+import { api } from "../lib/api.ts";
 import {
   CAMPOS_DOCUMENTO, CASO_EXEMPLO, temCpf, type Documentos as Docs,
 } from "../lib/caso.ts";
@@ -96,9 +97,34 @@ function CampoDocumento({
   const [arrastando, setArrastando] = useState(false);
   const preenchido = valor.trim().length > 0;
 
+  const [lendo, setLendo] = useState(false);
+  const [avisoDoArquivo, setAvisoDoArquivo] = useState<string | null>(null);
+
+  /**
+   * PDF é lido no servidor: o digital sai por extração e o digitalizado por
+   * OCR, sem sair da infraestrutura. Texto puro continua sendo lido aqui mesmo.
+   */
   async function lerArquivo(arquivo: File | undefined) {
     if (!arquivo) return;
-    onMudar(await arquivo.text());
+    setAvisoDoArquivo(null);
+    if (!arquivo.name.toLowerCase().endsWith(".pdf")) {
+      onMudar(await arquivo.text());
+      return;
+    }
+    setLendo(true);
+    try {
+      const r = await api.documento(arquivo);
+      onMudar(r.texto);
+      setAvisoDoArquivo(
+        r.origem === "ocr"
+          ? `PDF digitalizado: texto obtido por OCR (${r.paginas} pág., confiança ${r.confianca}%). Confira antes de seguir — OCR erra.`
+          : `PDF lido: ${r.paginas} página(s).`,
+      );
+    } catch (e) {
+      setAvisoDoArquivo(e instanceof Error ? e.message : "Falha ao ler o PDF.");
+    } finally {
+      setLendo(false);
+    }
   }
 
   return (
@@ -132,18 +158,29 @@ function CampoDocumento({
         }}
       >
         <IconeUpload className="size-5 text-muted" />
-        <span className="text-muted">Arraste um arquivo .txt ou</span>
-        <Button size="sm" variant="secondary" onPress={() => inputRef.current?.click()}>
+        <span className="text-muted">
+          {lendo ? "Lendo o documento…" : "Arraste um PDF ou .txt, ou"}
+        </span>
+        <Button
+          isDisabled={lendo}
+          size="sm"
+          variant="secondary"
+          onPress={() => inputRef.current?.click()}
+        >
           escolher arquivo
         </Button>
         <input
           ref={inputRef}
-          accept=".txt,.md,text/plain"
+          accept=".pdf,.txt,.md,application/pdf,text/plain"
           className="hidden"
           type="file"
           onChange={(e) => void lerArquivo(e.target.files?.[0])}
         />
       </div>
+
+      {avisoDoArquivo && (
+        <p className="mb-3 text-sm text-muted">{avisoDoArquivo}</p>
+      )}
 
       <TextArea
         aria-label={rotulo}

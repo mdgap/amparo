@@ -81,6 +81,22 @@ docker exec <container-da-api> node dist/scripts/cmed.js
 Sem argumento ele descobre o link do PMVG no portal da ANVISA e baixa. Com um
 caminho ou URL, usa o arquivo indicado.
 
+## Leitura de PDF e OCR
+
+A etapa 1 aceita PDF. O contêiner da API traz `poppler-utils` e `tesseract-ocr`
+com o pacote de português, e o caminho se divide sozinho:
+
+- **PDF digital** — o texto já está no arquivo. Extração instantânea.
+- **PDF digitalizado** — não tem camada de texto. Rasteriza a 300 dpi e passa
+  pelo OCR, no próprio contêiner: o documento não sai da infraestrutura.
+
+Medido na imagem: página digital sai em menos de 1s; página digitalizada leva
+cerca de 7s, com confiança perto de 90%. Abaixo de 70% a interface pede
+conferência, porque nome mal lido não é encontrado depois pela anonimização.
+
+O arquivo é lido em memória, processado e descartado. Teto de 20 MB e 30
+páginas por documento.
+
 ## Detalhes que não são óbvios
 
 **Timeout do nginx.** A análise completa leva cerca de dois minutos (duas

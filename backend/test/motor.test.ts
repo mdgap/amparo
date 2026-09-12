@@ -4,6 +4,7 @@ import { calcularCustoAnual } from "../src/domain/custo.ts";
 import { definirRota } from "../src/domain/rota.ts";
 import { resumirTema6, REQUISITOS_TEMA_6 } from "../src/domain/tema6.ts";
 import { semNulos } from "../src/llm/tolerante.ts";
+import { classificarPdf } from "../src/documentos/pdf.ts";
 import {
   extrairPosologia, precoCmed, reconhecerMedicamentos, unidadesDaApresentacao,
   versaoDaTabela,
@@ -394,4 +395,19 @@ test("parâmetros vigentes apontam para a norma que os fixa", () => {
   assert.equal(PARAMETROS.salarioMinimo.vigenciaDesde, "2026-01-01");
   assert.match(PARAMETROS.salarioMinimo.fonte, /Decreto nº 12\.797/);
   assert.equal(tetoEmReais(), 340410); // 210 x R$ 1.621,00
+});
+
+test("PDF digitalizado é reconhecido como imagem, não como documento vazio", () => {
+  // Laudo digital: centenas de caracteres por página.
+  assert.equal(classificarPdf("a".repeat(1500), 1).natureza, "digital");
+  assert.equal(classificarPdf("a".repeat(17678), 12).natureza, "digital");
+
+  // Digitalizado: o que sai é carimbo ou número de folha, não conteúdo.
+  // Seguir com isso como se fosse texto é o erro que faz o advogado achar
+  // que enviou o laudo quando não enviou nada.
+  assert.equal(classificarPdf("fl. 3", 1).natureza, "digitalizado");
+  assert.equal(classificarPdf("1 2 3 4 5", 4).natureza, "digitalizado");
+
+  assert.equal(classificarPdf("", 5).natureza, "vazio");
+  assert.equal(classificarPdf("   \n  ", 5).natureza, "vazio");
 });

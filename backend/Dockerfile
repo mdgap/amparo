@@ -23,6 +23,10 @@ COPY frontend/package.json frontend/package.json
 RUN npm ci --omit=dev --workspace=@mindthegap/backend \
  && npm cache clean --force
 
+# OCR de PDF digitalizado, dentro do contêiner: o documento do caso não sai da
+# infraestrutura. poppler rasteriza as páginas, tesseract lê, em português.
+RUN apk add --no-cache poppler-utils tesseract-ocr tesseract-ocr-data-por
+
 COPY --from=build /app/backend/dist backend/dist
 # Lidos em runtime pelos scripts: migrate.js -> ../../db, ingest.js -> ../../corpus
 COPY backend/db backend/db
