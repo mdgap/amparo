@@ -25,6 +25,11 @@ Projeto de hackathon (OAB 2026). Monorepo com npm workspaces: `backend`, `fronte
   em `backend/src/domain/parametros.ts`, versionados — nunca inline na regra.
 - Prompt versionado em `backend/src/llm/prompts/sistema.ts`; a versão vai no
   registro da análise.
+- Toda IA passa pela **OpenRouter**, com UMA chave (`OPENROUTER_API_KEY`) para
+  redação, classificação e embeddings. Modelos ficam no `.env`, não no código.
+  Nada de SDK de provedor: `fetch` na API compatível com a da OpenAI.
+- `EMBEDDINGS_DIM` precisa bater com o `VECTOR(n)` da migração 001. Trocar de
+  modelo de embedding exige conferir a dimensão e reingerir o corpus.
 - Frontend: HeroUI **v3** (compound components, `onPress`, sem Provider,
   Tailwind v4). Não aplicar padrões da v2.
 
