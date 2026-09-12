@@ -19,6 +19,7 @@
     "test": "npm run test --workspace=backend",
     "db:migrate": "npm run db:migrate --workspace=backend",
     "db:ingest": "npm run db:ingest --workspace=backend",
-    "typecheck": "npm run typecheck --workspace=backend"
+    "typecheck": "npm run typecheck --workspace=backend",
+    "db:cmed": "npm run db:cmed --workspace=backend"
   }
 }

@@ -16,6 +16,7 @@ const medicamento: Medicamento = {
   nome: "Trikafta",
   principioAtivo: "elexacaftor",
   precoApresentacao: 1000,
+  precoOrigem: "orcamento",
   unidadesPorApresentacao: 30,
   registroAnvisa: { possui: true, numero: "1.0068.1234" },
   incorporadoSus: false,
@@ -65,6 +66,8 @@ test("registro guarda só os campos do caso, nunca texto de documento", () => {
       nome: "Trikafta",
       principioAtivo: "elexacaftor",
       precoApresentacao: 1000,
+      // Preço de orçamento é referência provisória: o histórico precisa saber.
+      precoOrigem: "orcamento",
       unidadesPorApresentacao: 30,
       registroAnvisa: { possui: true },
       incorporadoSus: false,

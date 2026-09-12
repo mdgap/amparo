@@ -2,8 +2,12 @@ import type { FastifyError, FastifyInstance } from "fastify";
 
 /**
  * Erro nunca devolve nem registra a mensagem original: ela pode carregar texto
- * do documento — um provedor de IA que ecoa o prompt, um erro de banco com os
- * valores da linha. Resposta e log levam só status, código e tipo do erro.
+ * do documento — o corpo de erro do OpenRouter que ecoa o prompt, a resposta do
+ * modelo citada em `llm/cliente.ts`, um erro de banco com os valores da linha.
+ * Resposta e log levam só status, código e tipo do erro.
+ *
+ * A resposta sai sempre no campo `erro`, em português, que é o que a interface
+ * sabe ler — sem isso um 500 chegava na tela como "Falha na requisição".
  */
 export function protegerErros(app: FastifyInstance) {
   app.setErrorHandler((erro: FastifyError, req, reply) => {

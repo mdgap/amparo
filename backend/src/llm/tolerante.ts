@@ -21,3 +21,26 @@ export const listaDeTextos = z.preprocess((valor) => {
     .filter(Boolean);
   return partes.length > 1 ? partes : [texto];
 }, z.array(z.string()));
+
+/**
+ * Remove nulos antes de validar.
+ *
+ * Zod distingue `null` de ausente, mas o modelo não: `gpt-oss-120b` devolve
+ * `"alertaENatJus": null` quando quer dizer "não há alerta", e o schema com
+ * `.optional()` rejeitava — a análise inteira voltava 500 depois de dois
+ * minutos de modelo. Tratar null como ausente vale para qualquer campo
+ * opcional, presente ou futuro, e não muda nada quando o campo vem preenchido.
+ */
+export function semNulos<T>(valor: T): T {
+  if (Array.isArray(valor)) {
+    return valor.filter((v) => v !== null && v !== undefined).map(semNulos) as T;
+  }
+  if (valor && typeof valor === "object") {
+    const saida: Record<string, unknown> = {};
+    for (const [chave, v] of Object.entries(valor)) {
+      if (v !== null && v !== undefined) saida[chave] = semNulos(v);
+    }
+    return saida as T;
+  }
+  return valor;
+}

@@ -196,6 +196,24 @@ test("JSON malformado não devolve nem registra trecho do corpo", async () => {
   await app.close();
 });
 
+test("upload de documento está no app e a falha de upload não ecoa o corpo", async () => {
+  const { app, logs } = await montar();
+
+  // Sem multipart: o upload recusa, e a recusa não pode devolver o que veio.
+  const r = await app.inject({
+    method: "POST",
+    url: "/api/documento",
+    headers: { "content-type": "application/json" },
+    payload: { laudo: LAUDO },
+  });
+
+  assert.notEqual(r.statusCode, 404);
+  assert.equal(typeof r.json().erro, "string");
+  assert.ok(!r.body.includes("MARCADOR"));
+  assert.ok(!logs().includes("MARCADOR"));
+  await app.close();
+});
+
 test("erro no meio da análise não vaza o laudo nem o CPF", async () => {
   const falhaComEco: Dependencias["ia"] = {
     ...comIA,

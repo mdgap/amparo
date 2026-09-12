@@ -36,6 +36,7 @@ cp .env.example .env           # preencha as chaves (opcionais, veja abaixo)
 npm install
 npm run db:migrate
 npm run db:ingest              # carrega backend/corpus/*.md
+npm run db:cmed                # baixa e carrega a lista de preços da CMED
 npm run dev                    # API em :3333, web em :5173
 ```
 

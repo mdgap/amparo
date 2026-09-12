@@ -20,7 +20,13 @@ import type {
 export interface EntradaPersistida {
   medicamento: Pick<
     Medicamento,
-    "nome" | "principioAtivo" | "apresentacao" | "precoApresentacao" | "unidadesPorApresentacao" | "incorporadoSus"
+    | "nome"
+    | "principioAtivo"
+    | "apresentacao"
+    | "precoApresentacao"
+    | "precoOrigem"
+    | "unidadesPorApresentacao"
+    | "incorporadoSus"
   > & { registroAnvisa?: { possui: boolean } };
   posologia: Posologia;
 }
@@ -89,6 +95,8 @@ export function montarRegistro({
         principioAtivo: medicamento.principioAtivo,
         apresentacao: medicamento.apresentacao,
         precoApresentacao: medicamento.precoApresentacao,
+        // Preço de orçamento é referência provisória: o histórico precisa saber.
+        precoOrigem: medicamento.precoOrigem,
         unidadesPorApresentacao: medicamento.unidadesPorApresentacao,
         registroAnvisa: medicamento.registroAnvisa && { possui: medicamento.registroAnvisa.possui },
         incorporadoSus: medicamento.incorporadoSus,

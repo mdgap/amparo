@@ -1,9 +1,11 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
+import multipart from "@fastify/multipart";
 import { env, temLLM } from "./env.ts";
 import { rotasDeAnalise } from "./routes/analise.ts";
 import { rotasDeHistorico } from "./routes/historico.ts";
 import { rotasCmed } from "./routes/cmed.ts";
+import { rotasDeDocumento } from "./routes/documento.ts";
 import { analisarTema6 } from "./llm/analisarTema6.ts";
 import { redigirDossie } from "./llm/redigirDossie.ts";
 import { repositorioPostgres } from "./repositorio.ts";
@@ -40,9 +42,11 @@ export async function construirApp(deps: Partial<Dependencias> = {}): Promise<Fa
   protegerErros(app);
 
   await app.register(cors, { origin: env.CORS_ORIGIN.split(",") });
+  await app.register(multipart);
   await app.register(rotasDeAnalise, { prefix: "/api", repositorio, ia });
   await app.register(rotasDeHistorico, { prefix: "/api", repositorio });
   await app.register(rotasCmed, { prefix: "/api" });
+  await app.register(rotasDeDocumento, { prefix: "/api" });
 
   app.get("/health", async () => ({ ok: true }));
 

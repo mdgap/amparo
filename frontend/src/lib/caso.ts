@@ -8,6 +8,8 @@ export interface Documentos {
 export interface DadosMedicamento {
   nome: string;
   precoApresentacao: number;
+  /** "orcamento" quando a apresentação não consta da CMED. */
+  precoOrigem: "cmed" | "orcamento";
   unidadesPorApresentacao: number;
   comRegistroAnvisa: boolean;
   unidadesPorTomada: number;
@@ -25,6 +27,7 @@ export const DOCUMENTOS_VAZIOS: Documentos = {
 export const MEDICAMENTO_VAZIO: DadosMedicamento = {
   nome: "",
   precoApresentacao: 0,
+  precoOrigem: "cmed",
   unidadesPorApresentacao: 30,
   comRegistroAnvisa: true,
   unidadesPorTomada: 1,
@@ -72,6 +75,7 @@ export const CASO_EXEMPLO: { documentos: Documentos; medicamento: DadosMedicamen
   medicamento: {
     nome: "Medicamento sintético 50 mg, caixa com 30 comprimidos",
     precoApresentacao: 8420.55,
+    precoOrigem: "cmed",
     unidadesPorApresentacao: 30,
     comRegistroAnvisa: true,
     unidadesPorTomada: 1,

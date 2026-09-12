@@ -56,6 +56,47 @@ dispensa variável de URL de API no build e gasta **um domínio, não dois**.
   `slug`. Se falhar, registra aviso e a API sobe assim mesmo — o produto tem que
   subir mesmo com a IA fora.
 
+## Lista de preços da CMED
+
+Carrega sozinha, no start do contêiner da API — mas **em segundo plano**, e só
+quando precisa.
+
+- Não atrasa a subida: a API fica saudável em segundos, e a carga dos 14 MB e
+  ~26 mil linhas segue por trás. Enquanto não termina, a busca de preço devolve
+  vazio e o advogado digita à mão.
+- Não recarrega à toa: se a lista já está no banco e tem menos de 7 dias, o
+  script sai na hora. A CMED publica mensalmente.
+- Não duplica: uma trava do Postgres impede duas cargas simultâneas — o start
+  automático coincidindo com uma execução manual, ou dois contêineres subindo
+  juntos num redeploy. E a substituição é por DELETE dentro da transação, não
+  TRUNCATE: quem consulta continua vendo a lista antiga até o commit, sem janela
+  de tabela vazia nem lock de leitura.
+
+Para forçar uma recarga fora do prazo, ou depois de uma falha:
+
+```bash
+docker exec <container-da-api> node dist/scripts/cmed.js
+```
+
+Sem argumento ele descobre o link do PMVG no portal da ANVISA e baixa. Com um
+caminho ou URL, usa o arquivo indicado.
+
+## Leitura de PDF e OCR
+
+A etapa 1 aceita PDF. O contêiner da API traz `poppler-utils` e `tesseract-ocr`
+com o pacote de português, e o caminho se divide sozinho:
+
+- **PDF digital** — o texto já está no arquivo. Extração instantânea.
+- **PDF digitalizado** — não tem camada de texto. Rasteriza a 300 dpi e passa
+  pelo OCR, no próprio contêiner: o documento não sai da infraestrutura.
+
+Medido na imagem: página digital sai em menos de 1s; página digitalizada leva
+cerca de 7s, com confiança perto de 90%. Abaixo de 70% a interface pede
+conferência, porque nome mal lido não é encontrado depois pela anonimização.
+
+O arquivo é lido em memória, processado e descartado. Teto de 20 MB e 30
+páginas por documento.
+
 ## Detalhes que não são óbvios
 
 **Timeout do nginx.** A análise completa leva cerca de dois minutos (duas
