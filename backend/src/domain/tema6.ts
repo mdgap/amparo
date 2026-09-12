@@ -5,65 +5,87 @@ import type {
 } from "./types.ts";
 
 /**
- * Requisitos cumulativos do Tema 6/STF para medicamento não incorporado.
+ * Os seis requisitos cumulativos do Tema 6/STF para medicamento NÃO
+ * incorporado, na ordem e na redação do Guia Rápido do CNJ (nov/2025),
+ * item 3.1 — que está no corpus e pode ser citado.
  *
- * ATENÇÃO JURÍDICA: os enunciados abaixo são a leitura de trabalho da equipe e
- * precisam ser conferidos contra o texto do acordo homologado / tese antes da
- * demo. O campo `fonte` existe para que cada item seja rastreado até o corpus.
+ * Registro na ANVISA NÃO é um deles: é questão de competência (Tema 500), já
+ * resolvida pelo motor em `rota.ts` a partir do formulário. Deixá-lo aqui fazia
+ * o modelo julgar um campo que o motor já respondeu.
+ *
+ * PENDÊNCIA JURÍDICA: o Guia Rápido não diz se o silêncio do ente, vencido o
+ * prazo, equivale a negativa (item 1). Até haver resposta, silêncio é "fraco".
  */
 export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
   {
     id: "negativa_administrativa",
-    titulo: "Pedido administrativo prévio e negativa (ou mora)",
+    titulo: "Negativa administrativa prévia",
     descricao:
-      "Comprovação de que o medicamento foi requerido na rede pública e houve negativa, ou decurso do prazo de resposta.",
-    fonte: "Tema 6/STF; Tema 1234/STF",
+      "Negativa de fornecimento na via administrativa, com ato motivado e indicação de substituto. A análise judicial não substitui o ato administrativo.",
+    regraOk:
+      "ok: há negativa expressa documentada. fraco: requerimento protocolado e ainda sem resposta. falta: requerimento nunca feito.",
+    fonte:
+      "Guia Rápido do CNJ (nov/2025), item 3.1, requisito 1; Tema 1234/STF (RE 1.366.243); SV 60",
     comoComprovar:
-      "Protocolo do requerimento administrativo, resposta da secretaria de saúde ou comprovante do decurso de prazo.",
+      "Protocolo do requerimento administrativo e a resposta da secretaria de saúde, ou comprovante do decurso de prazo.",
   },
   {
-    id: "ausencia_incorporacao",
-    titulo: "Não incorporação pelo SUS e pronunciamento da CONITEC",
+    id: "ilegalidade_nao_incorporacao",
+    titulo: "Ilegalidade da não incorporação ou mora da CONITEC",
     descricao:
-      "Demonstração de que o fármaco não consta da RENAME/PCDT e de qual foi a posição da CONITEC (não incorporação, ausência de análise ou mora).",
-    fonte: "Tema 6/STF; Lei 8.080/1990, art. 19-Q",
+      "Ilegalidade da não incorporação pela CONITEC, ausência de pedido de incorporação, ou mora na análise (prazo de 180+90 dias).",
+    regraOk:
+      "ok: nunca avaliado pela CONITEC, ou em análise com o prazo de 180+90 dias vencido. fraco: em análise dentro do prazo; OU recomendação desfavorável SEM demonstração da ilegalidade do ato. falta: nada informado.",
+    fonte:
+      "Guia Rápido do CNJ (nov/2025), item 3.1, requisito 2; Lei 8.080/1990, arts. 19-Q e 19-R",
     comoComprovar:
-      "Consulta à RENAME/PCDT e ao parecer da CONITEC sobre a tecnologia.",
+      "Consulta à CONITEC com data; havendo recomendação desfavorável, peça que demonstre a ilegalidade do ato.",
   },
   {
-    id: "laudo_fundamentado",
-    titulo: "Laudo médico circunstanciado e fundamentado",
+    id: "impossibilidade_substituicao",
+    titulo: "Impossibilidade de substituição por medicamento do SUS",
     descricao:
-      "Laudo que descreve o quadro, a imprescindibilidade do fármaco e por que as alternativas do SUS são inadequadas ou ineficazes para este paciente.",
-    fonte: "Tema 6/STF; Tema 106/STJ",
+      "Inexistência de substituto nas listas do SUS ou no PCDT. O CNJ exige que o laudo descreva os medicamentos padronizados no SUS já utilizados UM A UM, constando posologia e tempo de uso de cada um.",
+    regraOk:
+      "ok: o laudo descreve cada medicamento do SUS já utilizado, um a um, com posologia E tempo de uso. fraco: a nota do e-NatJus ou o PCDT aponta alternativa que o laudo não menciona; OU o laudo nomeia as alternativas sem posologia e tempo de uso; OU afirma genericamente que 'não houve resposta a outros tratamentos'. falta: o laudo não trata de alternativas. Ao marcar fraco, NOMEIE a alternativa que ficou sem resposta.",
+    fonte:
+      "Guia Rápido do CNJ (nov/2025), item 3.1, requisito 3, e item 5; Tema 6/STF (RE 566.471); SV 61",
     comoComprovar:
-      "Laudo do médico assistente com CID, histórico de tratamentos tentados e justificativa individualizada.",
+      "Laudo descrevendo cada alternativa do SUS já tentada, com posologia e tempo de uso, confrontado com a nota do e-NatJus e o PCDT.",
   },
   {
-    id: "ineficacia_alternativas_sus",
-    titulo: "Ineficácia ou inadequação das alternativas disponíveis no SUS",
+    id: "medicina_baseada_em_evidencias",
+    titulo: "Medicina baseada em evidências",
     descricao:
-      "Registro de que as opções ofertadas pela rede foram tentadas e falharam, ou são contraindicadas no caso concreto.",
-    fonte: "Tema 6/STF; Tema 106/STJ",
+      "Eficácia, acurácia, efetividade e segurança comprovadas por evidência científica de alto nível: ensaio clínico randomizado, revisão sistemática ou meta-análise. A consulta ao NAT-Jus é obrigatória para não incorporados, se disponível, e a decisão não pode se basear apenas no laudo do autor.",
+    regraOk:
+      "ok: nota do e-NatJus favorável; OU nota condicional com qualidade alta ou moderada; OU laudo que referencia ensaio clínico randomizado, revisão sistemática ou meta-análise. fraco: nota contrária, qualidade baixa ou muito baixa, ou referência de nível inferior aos três aceitos. falta: sem nota e sem nenhuma referência no laudo.",
+    fonte: "Guia Rápido do CNJ (nov/2025), item 3.1, requisito 4, e item 6",
     comoComprovar:
-      "Histórico terapêutico no laudo, prontuário, relatório de intercorrências.",
+      "Nota técnica do e-NatJus na consulta pública; na falta dela, as referências científicas citadas pelo médico assistente.",
   },
   {
-    id: "registro_anvisa",
-    titulo: "Registro na ANVISA",
+    id: "imprescindibilidade_laudo",
+    titulo: "Indicação clínica imprescindível, com laudo fundamentado",
     descricao:
-      "O medicamento deve ter registro válido na ANVISA para a indicação pretendida (salvo as exceções do Tema 500/STF).",
-    fonte: "Tema 6/STF; Tema 500/STF",
-    comoComprovar: "Consulta de registro no portal da ANVISA.",
+      "Laudo médico específico e minucioso, com cinco elementos: CID; histórico de tratamentos COM DATAS; justificativa da dose; justificativa da duração; assinatura com CRM.",
+    regraOk:
+      "ok: os CINCO elementos estão presentes. fraco: falta um ou mais dos cinco — e a saída deve dizer QUAL falta. falta: laudo ausente ou genérico.",
+    fonte:
+      "Guia Rápido do CNJ (nov/2025), item 3.1, requisito 5; Tema 106/STJ (REsp 1.657.156)",
+    comoComprovar:
+      "Laudo do médico assistente contendo CID, histórico de tratamentos com datas, justificativa de dose e de duração, e assinatura com CRM.",
   },
   {
     id: "hipossuficiencia",
-    titulo: "Incapacidade financeira de custear o tratamento",
+    titulo: "Incapacidade financeira",
     descricao:
-      "Demonstração de que o paciente e sua família não conseguem arcar com o custo sem comprometer a subsistência.",
-    fonte: "Tema 6/STF; Tema 106/STJ",
+      "Prova consistente da incapacidade de arcar com o custo do medicamento. O produto exibe a razão entre custo anual e renda como número, sem julgar se a pessoa é hipossuficiente — quem decide é o juízo.",
+    regraOk:
+      "ok: declaração de hipossuficiência E comprovante de renda. fraco: apenas a declaração. falta: nenhum dos dois.",
+    fonte: "Guia Rápido do CNJ (nov/2025), item 3.1, requisito 6",
     comoComprovar:
-      "Declaração de hipossuficiência, comprovante de renda, comparativo entre renda familiar e custo anual apurado.",
+      "Declaração de hipossuficiência e comprovante de renda: holerite, declaração de IR, extrato ou CadÚnico.",
   },
 ];
 

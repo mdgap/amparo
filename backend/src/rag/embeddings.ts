@@ -1,28 +1,53 @@
-import { env } from "../env.ts";
+import { env, temEmbeddings } from "../env.ts";
 
 /**
- * Embeddings para busca no corpus. Provider "none" desliga a busca vetorial e
- * o RAG cai para busca lexical (trigram) — o app roda sem nenhuma chave.
+ * Embeddings pela OpenRouter, com a mesma chave da redação.
+ * `EMBEDDINGS_MODEL=none` (ou chave ausente) desliga a busca vetorial e o RAG
+ * cai para busca lexical — o app roda sem nenhuma chave.
  */
 export async function embed(textos: string[]): Promise<number[][] | null> {
-  if (env.EMBEDDINGS_PROVIDER === "none" || !env.VOYAGE_API_KEY) return null;
+  if (!temEmbeddings) return null;
 
-  const resp = await fetch("https://api.voyageai.com/v1/embeddings", {
+  const resp = await fetch(`${env.OPENROUTER_BASE_URL}/embeddings`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${env.VOYAGE_API_KEY}`,
+      authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+      "X-Title": "MindTheGap",
     },
     body: JSON.stringify({
-      model: env.VOYAGE_MODEL,
+      model: env.EMBEDDINGS_MODEL,
       input: textos,
-      output_dimension: env.EMBEDDINGS_DIM,
+      encoding_format: "float",
+      // Matryoshka: pede o tamanho que a coluna VECTOR(n) espera.
+      dimensions: env.EMBEDDINGS_DIM,
     }),
   });
 
   if (!resp.ok) {
-    throw new Error(`Voyage ${resp.status}: ${await resp.text()}`);
+    throw new Error(`OpenRouter embeddings ${resp.status}: ${await resp.text()}`);
   }
-  const json = (await resp.json()) as { data: { embedding: number[] }[] };
-  return json.data.map((d) => d.embedding);
+
+  const json = (await resp.json()) as {
+    data?: { index?: number; embedding: number[] }[];
+    error?: { message?: string };
+  };
+  if (json.error) throw new Error(`OpenRouter embeddings: ${json.error.message}`);
+  if (!json.data?.length) throw new Error("OpenRouter embeddings: resposta sem vetores");
+
+  // A ordem da resposta não é garantida; `index` é.
+  const vetores = [...json.data]
+    .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+    .map((d) => d.embedding);
+
+  const dim = vetores[0]!.length;
+  if (dim !== env.EMBEDDINGS_DIM) {
+    throw new Error(
+      `${env.EMBEDDINGS_MODEL} devolveu ${dim} dimensões, mas EMBEDDINGS_DIM=${env.EMBEDDINGS_DIM} ` +
+        `e a coluna é VECTOR(${env.EMBEDDINGS_DIM}). Escolha um modelo que aceite esse tamanho ` +
+        `ou altere a coluna em db/migrations e reingira o corpus.`,
+    );
+  }
+
+  return vetores;
 }

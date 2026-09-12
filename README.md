@@ -39,16 +39,31 @@ npm run db:ingest              # carrega backend/corpus/*.md
 npm run dev                    # API em :3333, web em :5173
 ```
 
-### Sem nenhuma chave de API
+### Sem chave de API
 
-O projeto sobe e funciona sem `ANTHROPIC_API_KEY` e sem `VOYAGE_API_KEY`:
+Toda a IA passa pela **OpenRouter**, com uma única chave (`OPENROUTER_API_KEY`)
+para redação, classificação e embeddings. Os modelos ficam no `.env`:
+`openai/gpt-oss-120b` para texto e `voyageai/voyage-4-lite` para embeddings.
 
-- sem chave da Anthropic, a rota `/api/analise` devolve só o motor de regras
-  (foro, polo passivo, memória de cálculo) e avisa que a IA está desligada;
-- sem chave de embeddings, a busca no corpus cai para similaridade lexical
-  (`pg_trgm`) em vez de pgvector.
+Sem a chave o projeto sobe igual:
+
+- `/api/analise` devolve só o motor de regras (foro, polo passivo, custeio,
+  memória de cálculo) e avisa que a IA está desligada;
+- a busca no corpus cai para similaridade lexical (`pg_trgm`, por
+  `word_similarity`) em vez de pgvector.
 
 Isso mantém a demo de pé mesmo se a rede cair no dia do hackathon.
+
+## Produção
+
+Docker Compose com três serviços — `web` (nginx servindo o SPA e fazendo proxy
+de `/api`), `api` e `db` (pgvector). Um domínio só. O passo a passo para o
+Dokploy está em [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+```bash
+cp .env.deploy.example .env    # preencha ao menos POSTGRES_PASSWORD
+docker compose up -d --build
+```
 
 ## Testes
 

@@ -76,7 +76,7 @@ export async function rotasDeAnalise(app: FastifyInstance) {
         rota,
         tema6: null,
         dossie: null,
-        aviso: temLLM ? undefined : "ANTHROPIC_API_KEY ausente: só o motor de regras foi executado.",
+        aviso: temLLM ? undefined : "OPENROUTER_API_KEY ausente: só o motor de regras foi executado.",
         parametrosVersao: PARAMETROS.versao,
       };
     }

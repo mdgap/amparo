@@ -1,0 +1,63 @@
+# MindTheGap — produção no Dokploy.
+#
+# Uma origem só: `web` (nginx) serve o SPA e faz proxy de /api para `api`.
+# Configure o domínio no Dokploy apontando para o serviço `web`, porta 80.
+# O serviço `api` NÃO precisa de domínio próprio.
+#
+# As variáveis abaixo são preenchidas na aba Environment do Dokploy, que as
+# grava num .env ao lado deste arquivo. Elas NÃO entram sozinhas nos
+# containers — por isso cada uma aparece explicitamente em `environment`.
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mindthegap}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no Environment}
+      POSTGRES_DB: ${POSTGRES_DB:-mindthegap}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mindthegap} -d ${POSTGRES_DB:-mindthegap}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-mindthegap}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-mindthegap}
+      PORT: "3333"
+      # Sem chave a API sobe igual: só o motor de regras e busca lexical.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-openai/gpt-oss-120b}
+      EMBEDDINGS_MODEL: ${EMBEDDINGS_MODEL:-voyageai/voyage-4-lite}
+      # Precisa bater com o VECTOR(n) da migração 001.
+      EMBEDDINGS_DIM: ${EMBEDDINGS_DIM:-1024}
+      # Mesma origem via nginx: CORS não é usado, fica restrito por garantia.
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+    expose:
+      - "3333"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  postgres_data:
