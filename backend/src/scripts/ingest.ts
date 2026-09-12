@@ -56,7 +56,7 @@ function emBlocos(corpo: string): Bloco[] {
   return blocos;
 }
 
-const arquivos = (await readdir(dir)).filter((f) => f.endsWith(".md"));
+const arquivos = (await readdir(dir)).filter((f) => f.endsWith(".md") && f !== "README.md");
 if (arquivos.length === 0) {
   console.log(`Nenhum .md em ${dir}. Adicione o corpus e rode de novo.`);
   await pool.end();
