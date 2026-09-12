@@ -58,21 +58,28 @@ dispensa variável de URL de API no build e gasta **um domínio, não dois**.
 
 ## Lista de preços da CMED
 
-A carga **não** roda no start do container: são 14 MB de planilha e ~26 mil
-linhas, e repetir isso a cada deploy só adiciona fragilidade. Rode uma vez
-depois do primeiro deploy, e de novo quando a CMED publicar lista nova
-(costuma ser mensal):
+Carrega sozinha, no start do contêiner da API — mas **em segundo plano**, e só
+quando precisa.
+
+- Não atrasa a subida: a API fica saudável em segundos, e a carga dos 14 MB e
+  ~26 mil linhas segue por trás. Enquanto não termina, a busca de preço devolve
+  vazio e o advogado digita à mão.
+- Não recarrega à toa: se a lista já está no banco e tem menos de 7 dias, o
+  script sai na hora. A CMED publica mensalmente.
+- Não duplica: uma trava do Postgres impede duas cargas simultâneas — o start
+  automático coincidindo com uma execução manual, ou dois contêineres subindo
+  juntos num redeploy. E a substituição é por DELETE dentro da transação, não
+  TRUNCATE: quem consulta continua vendo a lista antiga até o commit, sem janela
+  de tabela vazia nem lock de leitura.
+
+Para forçar uma recarga fora do prazo, ou depois de uma falha:
 
 ```bash
-docker compose exec api node dist/scripts/cmed.js
+docker exec <container-da-api> node dist/scripts/cmed.js
 ```
 
 Sem argumento ele descobre o link do PMVG no portal da ANVISA e baixa. Com um
-caminho ou URL, usa o arquivo indicado. No Dokploy dá para deixar isso em
-Schedule Jobs, mensal.
-
-Enquanto a tabela estiver vazia, a etapa de conferência continua funcionando:
-a busca não devolve nada e o advogado digita o preço à mão.
+caminho ou URL, usa o arquivo indicado.
 
 ## Detalhes que não são óbvios
 

@@ -134,10 +134,30 @@ async function carregar(caminho: string, versaoManual?: string) {
 
   const cliente = await pool.connect();
   try {
+    // Trava de concorrência. Duas cargas ao mesmo tempo — o start automático
+    // coincidindo com uma execução manual, ou dois contêineres subindo juntos
+    // num redeploy — DUPLICARIAM a lista: cada transação apaga o que enxergava
+    // no início e insere as suas 26 mil linhas por cima das da outra.
+    // O lock é do Postgres e solta sozinho quando a conexão cai.
+    const [trava] = (
+      await cliente.query<{ obtida: boolean }>(
+        "SELECT pg_try_advisory_lock(hashtext('cmed_preco')) AS obtida",
+      )
+    ).rows;
+    if (!trava?.obtida) {
+      console.log("Outra carga da CMED está em andamento. Nada a fazer.");
+      return;
+    }
+
     await cliente.query("BEGIN");
     // A lista é substituída inteira: preço velho misturado com novo é pior
     // que tabela vazia — o número vai para uma peça processual.
-    await cliente.query("TRUNCATE cmed_preco RESTART IDENTITY");
+    //
+    // DELETE, não TRUNCATE: o TRUNCATE toma lock exclusivo e travaria toda
+    // busca de preço durante os minutos da carga. Com DELETE dentro da
+    // transação, quem consulta continua vendo a lista antiga até o COMMIT, e
+    // depois vê a nova — recarga sem janela de tabela vazia.
+    await cliente.query("DELETE FROM cmed_preco");
 
     const descarregar = async () => {
       if (!lote.length) return;
@@ -221,6 +241,10 @@ async function carregar(caminho: string, versaoManual?: string) {
     await cliente.query("ROLLBACK");
     throw e;
   } finally {
+    // Solta a trava antes de devolver a conexão ao pool, que a reaproveita.
+    await cliente
+      .query("SELECT pg_advisory_unlock(hashtext('cmed_preco'))")
+      .catch(() => {});
     cliente.release();
   }
 }
@@ -228,6 +252,36 @@ async function carregar(caminho: string, versaoManual?: string) {
 const args = process.argv.slice(2);
 const versao = args.find((a) => a.startsWith("--versao="))?.split("=")[1];
 const alvo = args.find((a) => !a.startsWith("--"));
+
+/** Dias após os quais a lista é considerada velha. A CMED publica mensalmente. */
+const VALIDADE_EM_DIAS = 7;
+
+// `--se-necessario` é o modo do start do contêiner: não rebaixa a lista que já
+// está carregada e recente, e não gasta 14 MB de download a cada reinício.
+if (args.includes("--se-necessario")) {
+  const [linha] = (
+    await pool.query<{ itens: string; idade: number | null }>(
+      `SELECT count(*) AS itens,
+              EXTRACT(EPOCH FROM (now() - max(criado_em))) / 86400 AS idade
+         FROM cmed_preco`,
+    )
+  ).rows;
+  const itens = Number(linha?.itens ?? 0);
+  const idade = linha?.idade === null ? null : Number(linha?.idade);
+
+  if (itens > 0 && idade !== null && idade < VALIDADE_EM_DIAS) {
+    console.log(
+      `Tabela CMED já tem ${itens} apresentações, carregadas há ${idade.toFixed(1)} dia(s). Nada a fazer.`,
+    );
+    await pool.end();
+    process.exit(0);
+  }
+  console.log(
+    itens === 0
+      ? "Tabela CMED vazia: carregando."
+      : `Tabela CMED com ${idade?.toFixed(1)} dia(s): recarregando.`,
+  );
+}
 
 const origem = alvo ?? (await descobrirNoPortal());
 const caminho = /^https?:\/\//.test(origem) ? await baixar(origem) : origem;
