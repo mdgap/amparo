@@ -14,6 +14,7 @@ const medicamentoSchema = z.object({
   principioAtivo: z.string().optional(),
   apresentacao: z.string().optional(),
   precoApresentacao: z.number().nonnegative(),
+  precoOrigem: z.enum(["cmed", "orcamento"]).default("cmed"),
   unidadesPorApresentacao: z.number().int().positive(),
   registroAnvisa: z.object({ possui: z.boolean(), numero: z.string().optional() }).optional(),
   incorporadoSus: z.boolean().optional(),

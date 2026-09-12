@@ -93,6 +93,12 @@ export function definirRota(
     );
   }
 
+  if (custo.precoProvisorio) {
+    fundamento.push(
+      "Preço fora da tabela CMED: a competência acima foi fixada sobre orçamento da parte autora, valor PROVISÓRIO. O Guia Rápido do CNJ orienta oficiar a CMED para obter o preço; sem resposta a tempo, o orçamento serve de referência.",
+    );
+  }
+
   const distanciaDoTeto = Math.abs(custo.emSalariosMinimos - teto);
   const zonaDeAtencao = distanciaDoTeto <= teto * MARGEM_ZONA_DE_ATENCAO;
 
