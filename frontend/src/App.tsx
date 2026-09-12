@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 import { Alert, Spinner } from "@heroui/react";
-import { FormularioCaso } from "./components/FormularioCaso.tsx";
-import { PainelRota } from "./components/PainelRota.tsx";
-import { PainelTema6 } from "./components/PainelTema6.tsx";
-import { PainelDossie } from "./components/PainelDossie.tsx";
-import { api, type Analise, type EntradaCaso, type RequisitoTema6 } from "./lib/api.ts";
+import { Shell, type EtapaId } from "./components/Shell.tsx";
+import { Documentos } from "./etapas/Documentos.tsx";
+import { Conferencia } from "./etapas/Conferencia.tsx";
+import { Achados } from "./etapas/Achados.tsx";
+import { DossieEtapa } from "./etapas/DossieEtapa.tsx";
+import { api, type Analise, type RequisitoTema6 } from "./lib/api.ts";
+import {
+  CASO_EXEMPLO, DOCUMENTOS_VAZIOS, MEDICAMENTO_VAZIO,
+  type DadosMedicamento, type Documentos as Docs,
+} from "./lib/caso.ts";
 
 export function App() {
+  const [etapa, setEtapa] = useState<EtapaId>("documentos");
+  const [documentos, setDocumentos] = useState<Docs>(DOCUMENTOS_VAZIOS);
+  const [medicamento, setMedicamento] = useState<DadosMedicamento>(MEDICAMENTO_VAZIO);
   const [catalogo, setCatalogo] = useState<RequisitoTema6[]>([]);
   const [analise, setAnalise] = useState<Analise | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -16,77 +24,107 @@ export function App() {
     api.requisitos().then((r) => setCatalogo(r.requisitos)).catch(() => {});
   }, []);
 
-  async function analisar(entrada: EntradaCaso) {
+  const liberadas = new Set<EtapaId>(["documentos"]);
+  if (documentos.laudo.trim() || documentos.requerimentoAdministrativo.trim()) {
+    liberadas.add("conferencia");
+  }
+  if (analise) liberadas.add("achados");
+  if (analise?.dossie) liberadas.add("dossie");
+
+  async function analisar() {
     setCarregando(true);
     setErro(null);
     try {
-      setAnalise(await api.analisar(entrada));
+      const resultado = await api.analisar({
+        medicamento: {
+          nome: medicamento.nome,
+          precoApresentacao: medicamento.precoApresentacao,
+          unidadesPorApresentacao: medicamento.unidadesPorApresentacao,
+          registroAnvisa: { possui: medicamento.comRegistroAnvisa },
+        },
+        posologia: {
+          unidadesPorTomada: medicamento.unidadesPorTomada,
+          tomadasPorDia: medicamento.tomadasPorDia,
+          diasPorAno: medicamento.diasPorAno,
+        },
+        documentos,
+      });
+      setAnalise(resultado);
+      setEtapa("achados");
     } catch (e) {
-      setErro(e instanceof Error ? e.message : "Falha inesperada");
+      setErro(e instanceof Error ? e.message : "Falha inesperada na análise.");
     } finally {
       setCarregando(false);
     }
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
-      <header>
-        <h1 className="text-2xl font-bold">MindTheGap</h1>
-        <p className="text-muted">
-          Triagem de pedidos de medicamento ao SUS: rota processual pelo Tema 1234
-          e conferência dos requisitos do Tema 6, com fonte oficial em cada afirmação.
-        </p>
-      </header>
-
-      <Alert status="warning">
-        <Alert.Indicator />
-        <Alert.Content>
-          <Alert.Title>Ferramenta de apoio, não de decisão</Alert.Title>
-          <Alert.Description>
-            As saídas são minutas revisáveis e precisam da conferência do advogado.
-            Use apenas dados anonimizados: sem nome, sem CPF.
-          </Alert.Description>
-        </Alert.Content>
-      </Alert>
-
-      <FormularioCaso carregando={carregando} onAnalisar={analisar} />
-
+    <Shell etapa={etapa} liberadas={liberadas} onIr={setEtapa}>
       {erro && (
-        <Alert status="danger">
+        <Alert className="mb-6" status="danger">
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>Não foi possível analisar</Alert.Title>
+            <Alert.Title>Não foi possível concluir a análise</Alert.Title>
             <Alert.Description>{erro}</Alert.Description>
           </Alert.Content>
         </Alert>
       )}
 
       {carregando && (
-        <div className="flex items-center gap-3 text-muted">
-          <Spinner size="sm" /> Lendo o corpus e redigindo o dossiê…
+        <div
+          aria-live="polite"
+          className="mb-6 flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-surface px-6 py-4"
+        >
+          <Spinner size="sm" />
+          <span>Lendo os documentos e conferindo o corpus normativo…</span>
         </div>
       )}
 
-      {analise && (
-        <>
-          <PainelRota rota={analise.rota} />
-          {analise.aviso && (
-            <Alert status="accent">
-              <Alert.Indicator />
-              <Alert.Content>
-                <Alert.Title>Etapa de IA desligada</Alert.Title>
-                <Alert.Description>{analise.aviso}</Alert.Description>
-              </Alert.Content>
-            </Alert>
-          )}
-          {analise.tema6 && <PainelTema6 catalogo={catalogo} tema6={analise.tema6} />}
-          {analise.dossie && <PainelDossie dossie={analise.dossie} />}
-          <footer className="text-xs text-muted">
-            Parâmetros {analise.parametrosVersao}. Conteúdo gerado por IA sobre corpus
-            oficial — confira cada citação antes de protocolar.
-          </footer>
-        </>
+      {etapa === "documentos" && (
+        <Documentos
+          documentos={documentos}
+          onAvancar={() => setEtapa("conferencia")}
+          onExemplo={() => {
+            setDocumentos(CASO_EXEMPLO.documentos);
+            setMedicamento(CASO_EXEMPLO.medicamento);
+          }}
+          onMudar={setDocumentos}
+        />
       )}
-    </div>
+
+      {etapa === "conferencia" && (
+        <Conferencia
+          carregando={carregando}
+          medicamento={medicamento}
+          onAnalisar={() => void analisar()}
+          onMudar={setMedicamento}
+          onVoltar={() => setEtapa("documentos")}
+        />
+      )}
+
+      {etapa === "achados" && analise && (
+        <Achados
+          analise={analise}
+          catalogo={catalogo}
+          documentos={documentos}
+          onVerDossie={() => setEtapa("dossie")}
+          onVoltar={() => setEtapa("conferencia")}
+        />
+      )}
+
+      {etapa === "dossie" && analise?.dossie && (
+        <DossieEtapa
+          aptoParaProtocolo={analise.tema6?.resumo.aptoParaProtocolo ?? false}
+          dossie={analise.dossie}
+          onVoltar={() => setEtapa("achados")}
+        />
+      )}
+
+      <footer className="mt-10 border-t border-[var(--border)] pt-6 text-sm text-muted">
+        Ferramenta de apoio à triagem. As saídas são minutas revisáveis, não
+        substituem a conferência do advogado responsável, e o verde nos achados
+        indica evidência localizada no documento — nunca aprovação jurídica.
+      </footer>
+    </Shell>
   );
 }

@@ -1,2 +1,120 @@
 @import "tailwindcss";
 @import "@heroui/styles";
+
+/* ---------------------------------------------------------------------------
+   MindTheGap — design system
+   Paleta institucional aplicada sobre os tokens semânticos do HeroUI v3.
+   Regra de cor: verde-escuro sobre superfície clara, branco sobre verde-escuro.
+   O verde da marca (#00CB7C) nunca carrega texto — ele marca elemento ativo,
+   ícone e gradiente. Verde nunca significa aprovação jurídica automática.
+--------------------------------------------------------------------------- */
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Manrope", var(--font-sans);
+
+  --color-marca: #00cb7c;
+  --color-marca-lima: #6fec63;
+  --color-marca-teal: #008f97;
+  --color-tinta: #062b16;
+}
+
+:root,
+[data-theme="light"] {
+  /* Base */
+  --background: #f5faf7;
+  --foreground: #062b16;
+  --muted: #4a6b59;
+
+  /* Superfícies: documento e leitura longa ficam em branco sólido */
+  --surface: #ffffff;
+  --surface-foreground: #062b16;
+  --surface-secondary: #f5faf7;
+  --surface-secondary-foreground: #062b16;
+  --surface-tertiary: #eaf3ee;
+  --surface-tertiary-foreground: #062b16;
+  --overlay: #ffffff;
+  --overlay-foreground: #062b16;
+
+  /* Ação primária: verde-escuro com texto branco (AA em qualquer tamanho) */
+  --accent: #062b16;
+  --accent-foreground: #ffffff;
+  --link: #075c3a;
+
+  /* Campos */
+  --field-background: #ffffff;
+  --field-foreground: #062b16;
+  --field-placeholder: #6b8878;
+  --field-border: #dce8e0;
+  --field-border-width: 1px;
+
+  /* Bordas e foco */
+  --border: #dce8e0;
+  --separator: #dce8e0;
+  --default: #eaf3ee;
+  --default-foreground: #062b16;
+  --focus: #008f97;
+
+  /* Raio: botões e campos em 12px; cartões usam rounded-2xl (16px) */
+  --radius: 0.75rem;
+  --field-radius: 0.75rem;
+
+  /* Sombras discretas — sem vidro, sem brilho */
+  --surface-shadow: 0 1px 2px rgba(6, 43, 22, 0.04);
+  --overlay-shadow: 0 8px 24px rgba(6, 43, 22, 0.08);
+  --field-shadow: 0 0 0 0 transparent;
+
+  /* Estados de análise — sempre acompanhados de ícone e texto */
+  --status-ok-bg: #e3f7ee;
+  --status-ok-fg: #044e32;
+  --status-atencao-bg: #fdf3d7;
+  --status-atencao-fg: #7a4e00;
+  --status-erro-bg: #fde8e6;
+  --status-erro-fg: #8b1a1a;
+
+  --gradiente-marca: linear-gradient(135deg, #6fec63 0%, #00cb7c 60%, #008f97 100%);
+}
+
+body {
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .fonte-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Valores monetários e tabelas numéricas alinham por dígito */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.gradiente-marca {
+  background: var(--gradiente-marca);
+}
+
+/* Alvo de toque mínimo de 44px em controles interativos */
+.controle {
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Foco visível nos controles próprios (navegação, abas, disclosure).
+   :where() mantém especificidade zero, então o anel do HeroUI continua
+   prevalecendo nos componentes dele. */
+:where(button, summary, [role="tab"], a):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}

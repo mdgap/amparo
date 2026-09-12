@@ -51,3 +51,21 @@ o dossiê — nada que identifique o paciente.
 | `ANTHROPIC_API_KEY` | Só o motor de regras; dossiê não é gerado, com aviso na UI |
 | `VOYAGE_API_KEY` | Busca lexical em vez de vetorial |
 | Banco indisponível | `/api/rota` continua respondendo (motor puro, sem I/O) |
+
+## Interface
+
+Quatro etapas, uma ação primária por etapa:
+
+1. **Documentos** — envio ou colagem do laudo, receita, pedido administrativo e
+   nota do e-NatJus, com guarda de CPF antes de sair do navegador.
+2. **Conferência** — o advogado confere medicamento, preço CMED e posologia.
+   São os campos que definem competência, então passam por revisão humana
+   antes de qualquer análise.
+3. **Achados** — documento ao lado dos achados. Cada achado traz o estado, o
+   trecho literal do documento, a fonte e a próxima ação, em detalhe
+   expansível. Em tela estreita, alterna entre achados e documento.
+4. **Dossiê** — as peças geradas, com aviso quando o caso ainda não está apto
+   ao protocolo.
+
+O design system está descrito em `CLAUDE.md` e implementado em
+`frontend/src/index.css`.
