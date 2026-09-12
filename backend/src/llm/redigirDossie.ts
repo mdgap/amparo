@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { pedirJSON } from "./cliente.ts";
+import { listaDeTextos } from "./tolerante.ts";
 import { SISTEMA } from "./prompts/sistema.ts";
 import { montarContexto, type TrechoEncontrado } from "../rag/busca.ts";
 import type { ResultadoRota } from "../domain/types.ts";
@@ -9,7 +10,7 @@ const schema = z.object({
   memorandoDeRota: z.string(),
   requerimentoAdministrativo: z.string(),
   resumoDeEvidencia: z.string(),
-  pendenciasDoCliente: z.array(z.string()),
+  pendenciasDoCliente: listaDeTextos,
   trechoDePeticao: z.string(),
 });
 
@@ -37,6 +38,7 @@ NÚMEROS JÁ CALCULADOS PELO MOTOR — repita exatamente, não recalcule:
 - Em salários mínimos: ${rota.custo.emSalariosMinimos} SM (salário mínimo de R$ ${rota.custo.salarioMinimoUsado.toFixed(2)})
 - Justiça competente: ${rota.justica}
 - Polo passivo: ${rota.poloPassivo.join(", ")}
+- Custeio: ${rota.custeio}
 - Fundamento da rota: ${rota.fundamento.join(" ")}
 - Memória de cálculo: ${rota.custo.memoria.join(" | ")}
 

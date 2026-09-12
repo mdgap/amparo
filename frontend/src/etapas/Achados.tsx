@@ -159,6 +159,7 @@ function RotaResumo({ rota }: { rota: Analise["rota"] }) {
     },
     { rotulo: "Teto do Tema 1234", valor: `${brl(rota.custo.tetoEmReais)} (210 SM)` },
     { rotulo: "Polo passivo", valor: rota.poloPassivo.join(" + ") },
+    { rotulo: "Custeio", valor: rota.custeio },
   ];
 
   return (

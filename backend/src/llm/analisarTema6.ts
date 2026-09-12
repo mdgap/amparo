@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { pedirJSON } from "./cliente.ts";
+import { listaDeTextos } from "./tolerante.ts";
 import { SISTEMA } from "./prompts/sistema.ts";
 import { REQUISITOS_TEMA_6 } from "../domain/tema6.ts";
 import { buscarCorpus, montarContexto } from "../rag/busca.ts";
@@ -11,7 +12,7 @@ const schema = z.object({
       id: z.string(),
       status: z.enum(["ok", "fraco", "falta"]),
       justificativa: z.string(),
-      evidencias: z.array(z.string()).default([]),
+      evidencias: listaDeTextos.default([]),
       pendencia: z.string().optional(),
     }),
   ),
@@ -45,7 +46,8 @@ export async function analisarTema6(entrada: EntradaTema6): Promise<{
   );
 
   const requisitos = REQUISITOS_TEMA_6.map(
-    (r) => `- ${r.id}: ${r.titulo}. ${r.descricao} (comprova-se com: ${r.comoComprovar})`,
+    (r) =>
+      `- ${r.id}: ${r.titulo}\n  ${r.descricao}\n  REGRA DE CLASSIFICAÇÃO: ${r.regraOk}`,
   ).join("\n");
 
   const prompt = `CONTEXTO NORMATIVO (cite como [F1], [F2]...):
@@ -62,7 +64,7 @@ DOCUMENTOS DO CASO:
 <nota_e_natjus>${entrada.notaENatJus ?? "(não enviada)"}</nota_e_natjus>
 
 TAREFA:
-1. Para CADA requisito, devolva status "ok" (documento comprova), "fraco" (menciona mas de forma genérica ou sem documento de apoio) ou "falta" (não há comprovação).
+1. Para CADA requisito, devolva "ok", "fraco" ou "falta" seguindo a REGRA DE CLASSIFICAÇÃO daquele item, literalmente. A regra é do domínio jurídico: não a flexibilize nem aplique critério próprio. Na dúvida entre dois status, escolha o MENOS favorável — ausência de prova é pendência, nunca aprovação.
 2. Em "evidencias", copie trechos LITERAIS dos documentos do caso que sustentam o status. Sem trecho literal, o status não pode ser "ok".
 3. Em "pendencia", escreva o que o cliente precisa providenciar, quando o status não for "ok".
 4. Se a nota do e-NatJus apontar alternativa disponível no SUS que o laudo não enfrenta, descreva isso em "alertaENatJus".
