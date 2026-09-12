@@ -56,6 +56,7 @@ function emBlocos(corpo: string): Bloco[] {
   return blocos;
 }
 
+// README.md documenta o formato do corpus, não é documento normativo.
 const arquivos = (await readdir(dir)).filter((f) => f.endsWith(".md") && f !== "README.md");
 if (arquivos.length === 0) {
   console.log(`Nenhum .md em ${dir}. Adicione o corpus e rode de novo.`);
