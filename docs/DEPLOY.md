@@ -97,6 +97,30 @@ conferência, porque nome mal lido não é encontrado depois pela anonimização
 O arquivo é lido em memória, processado e descartado. Teto de 20 MB e 30
 páginas por documento.
 
+## Anonimização
+
+O serviço `anonimizador` roda na própria infraestrutura — Presidio com o modelo
+`pt` do spaCy, mais reconhecedores brasileiros que o Presidio não traz de
+fábrica (CPF, cartão do SUS, CNPJ, CEP, CRM). **O documento identificado não sai
+daqui.**
+
+Duas camadas: padrão para o que tem formato fixo, modelo para nome de pessoa em
+texto corrido. O texto sai com marcador — `[NOME]`, `[CPF]`, `[CRM]` — e não
+apagado: o requisito (e) do Tema 6 exige laudo com CRM e histórico com datas, e
+apagar destruiria a prova que o produto avalia. **Data não é anonimizada**, pelo
+mesmo motivo.
+
+Vocabulário clínico é preservado: o backend manda os princípios ativos da CMED
+junto, senão o modelo apaga "lamotrigina" como se fosse nome de gente. Termo
+precedido de "síndrome de", "doença de" e afins também escapa.
+
+**Falha fechada.** Se o `anonimizador` não responder, a rota devolve 503 e o
+documento não é processado. Devolver texto identificado em silêncio seria pior
+que não funcionar.
+
+Custo: a imagem carrega o modelo `pt_core_news_lg`. Conte ~2 GB de memória e
+cerca de 90s de warm-up no primeiro start.
+
 ## Detalhes que não são óbvios
 
 **Timeout do nginx.** A análise completa leva cerca de dois minutos (duas
