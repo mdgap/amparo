@@ -249,6 +249,17 @@ export const api = {
       precisaConferencia: boolean;
     };
   },
+  /** Notas técnicas do e-NatJus para um princípio ativo (consulta pública do CNJ). */
+  natjus: async (q: string) => {
+    const r = await fetch(`/api/natjus?q=${encodeURIComponent(q)}`);
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.erro ?? "Falha ao consultar o e-NatJus");
+    return json as {
+      notas: { id: number; cid: string; uf: string; finalizadaEm: string; url: string }[];
+      total: number;
+      paginas: number;
+    };
+  },
   cmed: async (q: string) => {
     const r = await fetch(`/api/cmed?q=${encodeURIComponent(q)}`);
     const json = await r.json();

@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Alert, Button, TextArea } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
 import { IconeOk, IconeSeta, IconeUpload } from "../components/Icones.tsx";
+import { BuscaNatJus } from "../components/BuscaNatJus.tsx";
 import { api } from "../lib/api.ts";
 import {
   CAMPOS_DOCUMENTO, CASO_EXEMPLO, temCpf, type Documentos as Docs,
@@ -55,6 +56,7 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
           <CampoDocumento
             key={campo.id}
             ajuda={campo.ajuda}
+            buscaNatJus={campo.id === "notaENatJus"}
             obrigatorio={campo.obrigatorio}
             rotulo={campo.rotulo}
             valor={documentos[campo.id]}
@@ -85,12 +87,13 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
 }
 
 function CampoDocumento({
-  rotulo, ajuda, obrigatorio, valor, onMudar,
+  rotulo, ajuda, obrigatorio, valor, buscaNatJus = false, onMudar,
 }: {
   rotulo: string;
   ajuda: string;
   obrigatorio: boolean;
   valor: string;
+  buscaNatJus?: boolean;
   onMudar: (v: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -142,6 +145,8 @@ function CampoDocumento({
         )}
       </div>
       <p className="mb-4 text-sm text-muted">{ajuda}</p>
+
+      {buscaNatJus && <BuscaNatJus />}
 
       <div
         className={`mb-3 flex items-center justify-center gap-3 rounded-xl border border-dashed px-4 py-4 text-sm transition-colors
