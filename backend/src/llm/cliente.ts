@@ -1,4 +1,5 @@
 import { env } from "../env.ts";
+import { semNulos } from "./tolerante.ts";
 
 /**
  * Cliente da OpenRouter (API compatível com a da OpenAI). Uma chave só para
@@ -43,6 +44,11 @@ export async function pedirJSON<T>(args: {
     headers: cabecalhos(),
     body: JSON.stringify({
       model: env.OPENROUTER_MODEL,
+      // Zero Data Retention: roteia só para provedores que não armazenam o
+      // conteúdo — e quem não armazena também não treina. É aqui que o texto
+      // do laudo trafega, então o reforço vale por requisição, além do que
+      // estiver ligado na conta (o parâmetro age como "OU", nunca desliga).
+      provider: { zdr: true },
       max_tokens: args.maxTokens ?? 4096,
       // Determinismo é requisito do produto: mesma entrada, mesma saída.
       temperature: 0,
@@ -65,5 +71,5 @@ export async function pedirJSON<T>(args: {
   if (json.error) throw new Error(`OpenRouter: ${json.error.message}`);
 
   const texto = json.choices?.[0]?.message?.content ?? "";
-  return args.schema.parse(JSON.parse(extrairJSON(texto)));
+  return args.schema.parse(semNulos(JSON.parse(extrairJSON(texto))));
 }
