@@ -18,11 +18,12 @@ export interface Parametros {
 export const PARAMETROS: Parametros = {
   versao: "2026-01",
   salarioMinimo: {
-    // TODO(equipe): confirmar o valor vigente na data do caso antes da demo.
-    valorMensal: 1518.0,
-    vigenciaDesde: "2025-01-01",
-    fonte: "Decreto de reajuste do salário mínimo (verificar edição vigente)",
+    // https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12797.htm
+    valorMensal: 1621.0,
+    vigenciaDesde: "2026-01-01",
+    fonte: "Decreto nº 12.797, de 23 de dezembro de 2025",
   },
+  // RE 1.366.243/SC (Tema 1234/STF), acórdão de mérito publicado em 11/10/2024.
   tetoCompetenciaEmSalariosMinimos: 210,
 };
 
