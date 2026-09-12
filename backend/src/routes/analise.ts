@@ -1,13 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import type { IA, Repositorio } from "../app.ts";
+import { montarRegistro, type RegistroAnalise } from "../domain/historico.ts";
 import { definirRota } from "../domain/rota.ts";
 import { resumirTema6, REQUISITOS_TEMA_6 } from "../domain/tema6.ts";
 import { PARAMETROS } from "../domain/parametros.ts";
-import { analisarTema6 } from "../llm/analisarTema6.ts";
-import { redigirDossie } from "../llm/redigirDossie.ts";
-import { PROMPT_VERSAO } from "../llm/prompts/sistema.ts";
-import { query } from "../db.ts";
-import { temLLM } from "../env.ts";
 
 const medicamentoSchema = z.object({
   nome: z.string().min(1),
@@ -42,11 +39,23 @@ const analiseSchema = z.object({
 
 const PII = /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/;
 
-export async function rotasDeAnalise(app: FastifyInstance) {
+export interface OpcoesAnalise {
+  repositorio: Repositorio;
+  ia: IA;
+}
+
+export async function rotasDeAnalise(app: FastifyInstance, { repositorio, ia }: OpcoesAnalise) {
+  // Falha ao gravar não derruba a análise. Só o tipo do erro vai para o log:
+  // a mensagem de um erro de banco pode carregar os valores da linha.
+  const gravar = (registro: RegistroAnalise) =>
+    repositorio.gravarAnalise(registro).catch((e: unknown) => {
+      app.log.warn({ tipo: e instanceof Error ? e.name : typeof e }, "análise não persistida");
+    });
+
   app.get("/requisitos", async () => ({
     requisitos: REQUISITOS_TEMA_6,
     parametros: PARAMETROS,
-    iaDisponivel: temLLM,
+    iaDisponivel: ia.temLLM,
   }));
 
   // Só o motor determinístico: responde sem chave de API e sem rede.
@@ -71,38 +80,33 @@ export async function rotasDeAnalise(app: FastifyInstance) {
 
     const rota = definirRota(medicamento, posologia);
 
-    if (apenasRota || !temLLM) {
+    if (apenasRota || !ia.temLLM) {
+      // Conferir só a rota é prévia, não análise: não entra no histórico.
+      if (!apenasRota) {
+        await gravar(montarRegistro({ medicamento, posologia, rota, tema6: null, dossie: null }));
+      }
       return {
         rota,
         tema6: null,
         dossie: null,
-        aviso: temLLM ? undefined : "OPENROUTER_API_KEY ausente: só o motor de regras foi executado.",
+        aviso: ia.temLLM ? undefined : "OPENROUTER_API_KEY ausente: só o motor de regras foi executado.",
         parametrosVersao: PARAMETROS.versao,
       };
     }
 
-    const { avaliacoes, alertaENatJus, fontes } = await analisarTema6({
+    const { avaliacoes, alertaENatJus, fontes } = await ia.analisarTema6({
       ...documentos,
       medicamento: medicamento.nome,
     });
     const resumo = resumirTema6(avaliacoes);
-    const dossie = await redigirDossie({
+    const dossie = await ia.redigirDossie({
       rota, resumo, medicamento: medicamento.nome, alertaENatJus, fontes,
     });
 
     const tema6 = { avaliacoes, resumo, alertaENatJus, fontes };
 
-    await query(
-      `INSERT INTO analise (parametros_versao, entrada, rota, tema6, dossie)
-       VALUES ($1,$2,$3,$4,$5)`,
-      [
-        `${PARAMETROS.versao}/${PROMPT_VERSAO}`,
-        JSON.stringify({ medicamento, posologia }), // documentos não são persistidos
-        JSON.stringify(rota),
-        JSON.stringify(tema6),
-        JSON.stringify(dossie),
-      ],
-    ).catch((e) => app.log.warn({ e }, "análise não persistida"));
+    // A resposta leva a avaliação completa; o banco guarda só status e contagens.
+    await gravar(montarRegistro({ medicamento, posologia, rota, tema6, dossie }));
 
     return { rota, tema6, dossie, parametrosVersao: PARAMETROS.versao };
   });
