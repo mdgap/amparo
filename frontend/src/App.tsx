@@ -5,7 +5,10 @@ import { Documentos } from "./etapas/Documentos.tsx";
 import { Conferencia } from "./etapas/Conferencia.tsx";
 import { Achados } from "./etapas/Achados.tsx";
 import { DossieEtapa } from "./etapas/DossieEtapa.tsx";
-import { api, type Analise, type RequisitoTema6 } from "./lib/api.ts";
+import { Progresso } from "./components/Progresso.tsx";
+import {
+  api, type Analise, type Passo, type PassoId, type RequisitoTema6,
+} from "./lib/api.ts";
 import {
   CASO_EXEMPLO, DOCUMENTOS_VAZIOS, MEDICAMENTO_VAZIO,
   type DadosMedicamento, type Documentos as Docs,
@@ -18,6 +21,7 @@ export function App() {
   const [catalogo, setCatalogo] = useState<RequisitoTema6[]>([]);
   const [analise, setAnalise] = useState<Analise | null>(null);
   const [carregando, setCarregando] = useState(false);
+  const [passos, setPassos] = useState<Map<PassoId, Passo>>(new Map());
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,8 +38,9 @@ export function App() {
   async function analisar() {
     setCarregando(true);
     setErro(null);
+    setPassos(new Map());
     try {
-      const resultado = await api.analisar({
+      const resultado = await api.analisarComProgresso({
         medicamento: {
           nome: medicamento.nome,
           precoApresentacao: medicamento.precoApresentacao,
@@ -49,7 +54,7 @@ export function App() {
           diasPorAno: medicamento.diasPorAno,
         },
         documentos,
-      });
+      }, (passo) => setPassos((atual) => new Map(atual).set(passo.id, passo)));
       setAnalise(resultado);
       setEtapa("achados");
     } catch (e) {
@@ -72,12 +77,8 @@ export function App() {
       )}
 
       {carregando && (
-        <div
-          aria-live="polite"
-          className="mb-6 flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-surface px-6 py-4"
-        >
-          <Spinner size="sm" />
-          <span>Lendo os documentos e conferindo o corpus normativo…</span>
+        <div aria-live="polite" className="mb-6">
+          <Progresso passos={passos} />
         </div>
       )}
 

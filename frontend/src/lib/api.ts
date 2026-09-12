@@ -124,8 +124,92 @@ export interface ApresentacaoCmed {
   tabela_versao: string;
 }
 
+export type PassoId = "anonimizacao" | "motor" | "tema6" | "placar" | "dossie";
+
+export interface Passo {
+  id: PassoId;
+  estado: "fazendo" | "feito";
+  detalhe?: string;
+}
+
+/** Os passos na ordem, com o que cada um faz — a tela lê daqui. */
+export const PASSOS_DA_ANALISE: { id: PassoId; titulo: string; enquanto: string }[] = [
+  {
+    id: "anonimizacao",
+    titulo: "Anonimizando os documentos",
+    enquanto: "Nome, CPF, cartão do SUS, endereço e contato viram marcador antes de qualquer coisa. Roda no nosso servidor: o texto identificado não sai daqui.",
+  },
+  {
+    id: "motor",
+    titulo: "Calculando custo, foro e polo passivo",
+    enquanto: "Conta determinística a partir do preço e da posologia. Nenhum desses números passa pelo modelo.",
+  },
+  {
+    id: "tema6",
+    titulo: "Lendo os documentos e classificando os seis requisitos",
+    enquanto: "Busca os fundamentos no corpus normativo e confronta cada requisito do Tema 6 com o que os documentos provam. É a etapa mais longa.",
+  },
+  {
+    id: "placar",
+    titulo: "Consolidando o placar",
+    enquanto: "Quantos requisitos estão ok, fracos ou faltando — somado em código, não pelo modelo.",
+  },
+  {
+    id: "dossie",
+    titulo: "Redigindo as cinco peças do dossiê",
+    enquanto: "Memorando de rota, requerimento administrativo, resumo de evidência, pendências e trecho de petição.",
+  },
+];
+
 export const api = {
   analisar: (entrada: EntradaCaso) => post<Analise>("/analise", entrada),
+
+  /**
+   * Mesma análise, recebendo o progresso enquanto acontece. Usa fetch com
+   * leitura incremental, e não EventSource, porque o caso vai no corpo do POST.
+   */
+  analisarComProgresso: async (
+    entrada: EntradaCaso,
+    aoAndar: (passo: Passo) => void,
+  ): Promise<Analise> => {
+    const resp = await fetch("/api/analise/progresso", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(entrada),
+    });
+
+    if (!resp.ok || !resp.body) {
+      const erro = await resp.json().catch(() => null);
+      throw new Error(erro?.erro ?? `Falha na análise (${resp.status})`);
+    }
+
+    const leitor = resp.body.getReader();
+    const decodificador = new TextDecoder();
+    let resto = "";
+    let resultado: Analise | null = null;
+
+    for (;;) {
+      const { done, value } = await leitor.read();
+      if (done) break;
+      resto += decodificador.decode(value, { stream: true });
+
+      // Eventos chegam separados por linha em branco; o último pedaço pode
+      // estar incompleto e fica para a próxima volta.
+      const blocos = resto.split("\n\n");
+      resto = blocos.pop() ?? "";
+      for (const bloco of blocos) {
+        const linha = bloco.split("\n").find((l) => l.startsWith("data: "));
+        if (!linha) continue;
+        const evento = JSON.parse(linha.slice(6));
+        if (evento.tipo === "passo") aoAndar(evento as Passo);
+        else if (evento.tipo === "fim") resultado = evento.resultado as Analise;
+        else if (evento.tipo === "erro") throw new Error(evento.erro);
+      }
+    }
+
+    if (!resultado) throw new Error("A análise terminou sem devolver resultado.");
+    return resultado;
+  },
   reconhecer: async (laudo: string, receita: string) =>
     post<{
       achados: {

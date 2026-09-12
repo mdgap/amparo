@@ -44,6 +44,18 @@ const analiseSchema = z.object({
 
 const PII = /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/;
 
+const ERRO_CPF =
+  "CPF detectado nos documentos. Remova dados pessoais antes de enviar — a ferramenta trabalha sem identificação do paciente.";
+const AVISO_SEM_IA = "OPENROUTER_API_KEY ausente: só o motor de regras foi executado.";
+
+/** Passos que a interface acompanha, na ordem em que acontecem. */
+export type PassoId = "anonimizacao" | "motor" | "tema6" | "placar" | "dossie";
+export interface Passo {
+  id: PassoId;
+  estado: "fazendo" | "feito";
+  detalhe?: string;
+}
+
 export async function rotasDeAnalise(app: FastifyInstance) {
   app.get("/requisitos", async () => ({
     requisitos: REQUISITOS_TEMA_6,
@@ -59,56 +71,65 @@ export async function rotasDeAnalise(app: FastifyInstance) {
     return { rota: definirRota(medicamento, posologia), parametrosVersao: PARAMETROS.versao };
   });
 
-  app.post("/analise", async (req, reply) => {
-    const parsed = analiseSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ erro: parsed.error.issues });
-    const { medicamento, posologia, documentos, apenasRota } = parsed.data;
+  /**
+   * A análise, passo a passo, avisando o que está fazendo.
+   *
+   * São quase dois minutos de espera, quase todos dentro de duas chamadas ao
+   * modelo. Sem dizer em que ponto está, a tela parece travada — e o usuário
+   * não tem como saber que a anonimização aconteceu.
+   */
+  async function executarAnalise(
+    dados: z.infer<typeof analiseSchema>,
+    aviso: (passo: Passo) => void,
+  ) {
+    const { medicamento, posologia, documentos } = dados;
 
-    const textos = Object.values(documentos).filter(Boolean).join("\n");
-    if (PII.test(textos)) {
-      return reply.code(422).send({
-        erro: "CPF detectado nos documentos. Remova dados pessoais antes de enviar — a ferramenta trabalha sem identificação do paciente.",
-      });
-    }
-
-    const rota = definirRota(medicamento, posologia);
-
-    if (apenasRota || !temLLM) {
-      return {
-        rota,
-        tema6: null,
-        dossie: null,
-        aviso: temLLM ? undefined : "OPENROUTER_API_KEY ausente: só o motor de regras foi executado.",
-        parametrosVersao: PARAMETROS.versao,
-      };
-    }
-
-    // Ponto de estrangulamento: NADA vai para o modelo sem passar por aqui.
-    // A rota de upload já anonimiza o PDF, mas texto colado direto na caixa
-    // chegaria cru — e é o caminho mais usado.
+    aviso({ id: "anonimizacao", estado: "fazendo" });
     const ordem = ["laudo", "receita", "notaENatJus", "requerimentoAdministrativo"] as const;
-    const limpos = await anonimizarVarios(ordem.map((c) => documentos[c] ?? "")).catch(
-      () => null,
-    );
-    if (!limpos) {
-      return reply.code(503).send({
-        erro:
-          "O serviço de anonimização não respondeu. A análise não foi executada — " +
-          "nenhum texto é enviado ao modelo sem passar por ele.",
-      });
-    }
+    const limpos = await anonimizarVarios(ordem.map((c) => documentos[c] ?? ""));
     const anonimizados = Object.fromEntries(
       ordem.map((campo, i) => [campo, limpos.textos[i]!]),
     ) as Record<(typeof ordem)[number], string>;
+    aviso({
+      id: "anonimizacao",
+      estado: "feito",
+      detalhe: limpos.total
+        ? `${limpos.total} dado(s) pessoal(is) substituído(s): ${Object.entries(limpos.removidos).map(([m, n]) => `${n}× ${m}`).join(", ")}`
+        : "Nenhum dado pessoal encontrado nos documentos",
+    });
 
+    aviso({ id: "motor", estado: "fazendo" });
+    const rota = definirRota(medicamento, posologia);
+    aviso({
+      id: "motor",
+      estado: "feito",
+      detalhe: `Justiça ${rota.justica === "federal" ? "Federal" : "Estadual"} · ${rota.custo.emSalariosMinimos} SM · ${rota.custeio}`,
+    });
+
+    aviso({ id: "tema6", estado: "fazendo" });
     const { avaliacoes, alertaENatJus, fontes } = await analisarTema6({
       ...anonimizados,
       medicamento: medicamento.nome,
     });
+    aviso({
+      id: "tema6",
+      estado: "feito",
+      detalhe: `${fontes.length} trecho(s) do corpus citados · ${avaliacoes.length} requisito(s) avaliados`,
+    });
+
+    aviso({ id: "placar", estado: "fazendo" });
     const resumo = resumirTema6(avaliacoes);
+    aviso({
+      id: "placar",
+      estado: "feito",
+      detalhe: `${resumo.ok} ok, ${resumo.fracos} fraco(s), ${resumo.faltantes} faltando — ${resumo.aptoParaProtocolo ? "apto" : "não apto"} para protocolo`,
+    });
+
+    aviso({ id: "dossie", estado: "fazendo" });
     const dossie = await redigirDossie({
       rota, resumo, medicamento: medicamento.nome, alertaENatJus, fontes,
     });
+    aviso({ id: "dossie", estado: "feito", detalhe: "Cinco peças redigidas" });
 
     const tema6 = { avaliacoes, resumo, alertaENatJus, fontes };
 
@@ -117,7 +138,7 @@ export async function rotasDeAnalise(app: FastifyInstance) {
        VALUES ($1,$2,$3,$4,$5)`,
       [
         `${PARAMETROS.versao}/${PROMPT_VERSAO}`,
-        JSON.stringify({ medicamento, posologia }), // documentos não são persistidos
+        JSON.stringify({ medicamento, posologia }),
         JSON.stringify(rota),
         JSON.stringify(tema6),
         JSON.stringify(dossie),
@@ -131,5 +152,61 @@ export async function rotasDeAnalise(app: FastifyInstance) {
       anonimizacao: { removidos: limpos.removidos, total: limpos.total },
       parametrosVersao: PARAMETROS.versao,
     };
+  }
+
+  /** Mesma análise, transmitindo o progresso por Server-Sent Events. */
+  app.post("/analise/progresso", async (req, reply) => {
+    const parsed = analiseSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ erro: parsed.error.issues });
+
+    const textos = Object.values(parsed.data.documentos).filter(Boolean).join("\n");
+    if (PII.test(textos)) return reply.code(422).send({ erro: ERRO_CPF });
+    if (!temLLM) return reply.code(503).send({ erro: AVISO_SEM_IA });
+
+    reply.hijack();
+    reply.raw.writeHead(200, {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-cache",
+      connection: "keep-alive",
+      // O nginx guarda resposta em buffer por padrão, o que anularia o
+      // streaming: tudo chegaria junto, no fim.
+      "x-accel-buffering": "no",
+    });
+    const enviar = (dado: unknown) => reply.raw.write(`data: ${JSON.stringify(dado)}\n\n`);
+
+    try {
+      const resultado = await executarAnalise(parsed.data, (passo) => enviar({ tipo: "passo", ...passo }));
+      enviar({ tipo: "fim", resultado });
+    } catch (e) {
+      req.log.error({ e }, "falha na análise com progresso");
+      enviar({
+        tipo: "erro",
+        erro: e instanceof Error ? e.message : "Falha ao processar a análise",
+      });
+    } finally {
+      reply.raw.end();
+    }
+  });
+
+  app.post("/analise", async (req, reply) => {
+    const parsed = analiseSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ erro: parsed.error.issues });
+    const { medicamento, posologia, documentos, apenasRota } = parsed.data;
+
+    const textos = Object.values(documentos).filter(Boolean).join("\n");
+    if (PII.test(textos)) return reply.code(422).send({ erro: ERRO_CPF });
+
+    if (apenasRota || !temLLM) {
+      return {
+        rota: definirRota(medicamento, posologia),
+        tema6: null,
+        dossie: null,
+        aviso: temLLM ? undefined : AVISO_SEM_IA,
+        parametrosVersao: PARAMETROS.versao,
+      };
+    }
+
+    // Mesma pipeline da rota com progresso, sem transmitir os passos.
+    return executarAnalise(parsed.data, () => {});
   });
 }

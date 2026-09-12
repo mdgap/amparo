@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { pedirJSON } from "./cliente.ts";
-import { listaDeTextos } from "./tolerante.ts";
+import { listaDeTextos, semMarkdown } from "./tolerante.ts";
 import { SISTEMA } from "./prompts/sistema.ts";
 import { montarContexto, type TrechoEncontrado } from "../rag/busca.ts";
 import type { ResultadoRota } from "../domain/types.ts";
@@ -57,5 +57,15 @@ ${resumo.aptoParaProtocolo ? "" : 'IMPORTANTE: nem todos os requisitos estão cu
 
 Responda SOMENTE com JSON: {"memorandoDeRota","requerimentoAdministrativo","resumoDeEvidencia","pendenciasDoCliente":[],"trechoDePeticao"}`;
 
-  return pedirJSON({ system: SISTEMA, prompt, schema, maxTokens: 8192 });
+  const dossie = await pedirJSON({ system: SISTEMA, prompt, schema, maxTokens: 8192 });
+
+  // A instrução no prompt reduz o Markdown; a limpeza aqui é o que garante.
+  return {
+    ...dossie,
+    memorandoDeRota: semMarkdown(dossie.memorandoDeRota),
+    requerimentoAdministrativo: semMarkdown(dossie.requerimentoAdministrativo),
+    resumoDeEvidencia: semMarkdown(dossie.resumoDeEvidencia),
+    trechoDePeticao: semMarkdown(dossie.trechoDePeticao),
+    pendenciasDoCliente: dossie.pendenciasDoCliente.map(semMarkdown),
+  };
 }

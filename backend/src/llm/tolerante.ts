@@ -44,3 +44,31 @@ export function semNulos<T>(valor: T): T {
   }
   return valor;
 }
+
+/**
+ * Tira Markdown do texto das peças.
+ *
+ * O dossiê é copiado para dentro de uma petição: asterisco de negrito e
+ * cerquilha de título não têm lugar lá, e apareciam crus na tela porque a
+ * interface renderiza texto puro. A instrução no prompt reduz, não elimina —
+ * modelo aberto reincide. Limpar na saída é o que garante.
+ *
+ * Marcador de lista vira travessão, que é a convenção de peça processual.
+ */
+export function semMarkdown(texto: string): string {
+  return texto
+    .replace(/```[a-z]*\n?/gi, "")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^\s{0,3}>\s?/gm, "")
+    .replace(/^(\s*)[-*+]\s+/gm, "$1— ")
+    .replace(/\*\*\*(.+?)\*\*\*/gs, "$1")
+    .replace(/\*\*(.+?)\*\*/gs, "$1")
+    .replace(/(?<!\w)__(.+?)__(?!\w)/gs, "$1")
+    .replace(/(?<![*\w])\*(?!\s)(.+?)(?<!\s)\*(?![*\w])/gs, "$1")
+    .replace(/`([^`\n]+)`/g, "$1")
+    .replace(/\[([^\]\n]+)\]\((https?:[^)\s]+)\)/g, "$1 ($2)")
+    .replace(/^[ \t]*[-*_]{3,}[ \t]*$/gm, "")
+    .replace(/[ \t]+$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
