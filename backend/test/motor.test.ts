@@ -11,6 +11,9 @@ const P: Parametros = {
   versao: "test",
   salarioMinimo: { valorMensal: 1000, vigenciaDesde: "2026-01-01", fonte: "teste" },
   tetoCompetenciaEmSalariosMinimos: 210,
+  pisoRessarcimentoEmSalariosMinimos: 7,
+  fracaoRessarcimentoUniao: 0.65,
+  municipioRespondePorNaoIncorporado: false,
 };
 
 const medBase: Medicamento = {
@@ -34,10 +37,51 @@ test("custo rejeita entrada inválida em vez de gerar número errado", () => {
   assert.throws(() => calcularCustoAnual(medBase, { ...contínuo, diasPorAno: 0 }, P));
 });
 
-test("abaixo do teto vai para a Justiça Estadual sem a União", () => {
+test("entre o piso e o teto: Estadual contra o Estado, com ressarcimento da União", () => {
+  // 13 caixas/ano x R$ 1.000 = R$ 13.000 = 13 SM
   const r = definirRota(medBase, contínuo, P);
   assert.equal(r.justica, "estadual");
-  assert.deepEqual(r.poloPassivo, ["Estado", "Município"]);
+  assert.equal(r.faixa, "ressarcimento_federal");
+  assert.deepEqual(r.poloPassivo, ["Estado"]);
+  assert.match(r.custeio, /65%/);
+});
+
+test("abaixo de 7 SM: Estadual, e o Estado custeia integralmente", () => {
+  // 13 caixas/ano x R$ 400 = R$ 5.200 = 5,2 SM
+  const barato = { ...medBase, precoApresentacao: 400 };
+  const r = definirRota(barato, contínuo, P);
+  assert.equal(r.custo.emSalariosMinimos, 5.2);
+  assert.equal(r.justica, "estadual");
+  assert.equal(r.faixa, "abaixo_do_piso");
+  assert.deepEqual(r.poloPassivo, ["Estado"]);
+  assert.match(r.custeio, /integralmente/);
+});
+
+test("exatamente no piso de 7 SM fica na faixa de ressarcimento", () => {
+  const noPiso = { ...medBase, precoApresentacao: 7000 / 13 };
+  const r = definirRota(noPiso, contínuo, P);
+  assert.equal(r.custo.emSalariosMinimos, 7);
+  assert.equal(r.faixa, "ressarcimento_federal");
+});
+
+test("um centavo abaixo do piso fica abaixo do piso mesmo exibindo 7,00 SM", () => {
+  // 13 caixas x R$ 538,4607... = R$ 6.999,99 → 6,99999 SM, exibido como 7,00
+  const centavoAbaixo = { ...medBase, precoApresentacao: 6999.99 / 13 };
+  const r = definirRota(centavoAbaixo, contínuo, P);
+  assert.equal(r.custo.custoAnual, 6999.99);
+  assert.equal(r.custo.emSalariosMinimos, 7);
+  assert.equal(r.faixa, "abaixo_do_piso");
+});
+
+test("Município fora do polo por não incorporado, salvo pactuação na CIB", () => {
+  const semPactuacao = definirRota(medBase, contínuo, P);
+  assert.ok(!semPactuacao.poloPassivo.includes("Município"));
+  assert.match(semPactuacao.fundamento.join(" "), /CIB/);
+
+  const comPactuacao = definirRota(medBase, contínuo, {
+    ...P, municipioRespondePorNaoIncorporado: true,
+  });
+  assert.deepEqual(comPactuacao.poloPassivo, ["Estado", "Município"]);
 });
 
 test("acima de 210 SM vai para a Justiça Federal com a União", () => {
@@ -45,7 +89,8 @@ test("acima de 210 SM vai para a Justiça Federal com a União", () => {
   const caro = { ...medBase, precoApresentacao: 20000 };
   const r = definirRota(caro, contínuo, P);
   assert.equal(r.justica, "federal");
-  assert.ok(r.poloPassivo.includes("União"));
+  assert.equal(r.faixa, "acima_do_teto");
+  assert.deepEqual(r.poloPassivo, ["União"]);
 });
 
 test("exatamente no teto vai para a Justiça Federal (igual ou superior a 210 SM)", () => {
@@ -54,7 +99,8 @@ test("exatamente no teto vai para a Justiça Federal (igual ou superior a 210 SM
   const r = definirRota(noTeto, contínuo, P);
   assert.equal(r.custo.emSalariosMinimos, 210);
   assert.equal(r.justica, "federal");
-  assert.ok(r.poloPassivo.includes("União"));
+  assert.equal(r.faixa, "acima_do_teto");
+  assert.deepEqual(r.poloPassivo, ["União"]);
   assert.equal(r.zonaDeAtencao, true);
 });
 
@@ -65,6 +111,7 @@ test("um centavo abaixo do teto fica na Estadual mesmo exibindo 210,00 SM", () =
   assert.equal(r.custo.custoAnual, 209999.99);
   assert.equal(r.custo.emSalariosMinimos, 210);
   assert.equal(r.justica, "estadual");
+  assert.equal(r.faixa, "ressarcimento_federal");
 });
 
 test("logo abaixo do teto fica na Justiça Estadual", () => {
@@ -72,14 +119,52 @@ test("logo abaixo do teto fica na Justiça Estadual", () => {
   const abaixo = { ...medBase, precoApresentacao: 209000 / 13 };
   const r = definirRota(abaixo, contínuo, P);
   assert.equal(r.justica, "estadual");
-  assert.deepEqual(r.poloPassivo, ["Estado", "Município"]);
+  assert.equal(r.faixa, "ressarcimento_federal");
+  assert.deepEqual(r.poloPassivo, ["Estado"]);
 });
 
 test("sem registro na ANVISA vai para a Justiça Federal mesmo barato", () => {
   const semRegistro = { ...medBase, precoApresentacao: 10, registroAnvisa: { possui: false } };
   const r = definirRota(semRegistro, contínuo, P);
   assert.equal(r.justica, "federal");
+  assert.equal(r.faixa, "sem_registro_anvisa");
+  assert.deepEqual(r.poloPassivo, ["União"]);
   assert.match(r.fundamento.join(" "), /500/);
+  // A regra geral é de impedimento, não de fornecimento com ressalva.
+  assert.match(r.fundamento.join(" "), /IMPEDE/);
+});
+
+test("medicamento incorporado ao SUS sai com aviso de conferência humana", () => {
+  const r = definirRota({ ...medBase, incorporadoSus: true }, contínuo, P);
+  assert.match(r.fundamento.join(" "), /Componente/);
+});
+
+test("os seis requisitos são os seis do Guia do CNJ, nem mais nem menos", () => {
+  // Guarda de regressão: registro na ANVISA é competência (Tema 500), não
+  // requisito de mérito; evidência científica é o requisito 4 e já faltou.
+  assert.deepEqual(
+    REQUISITOS_TEMA_6.map((r) => r.id),
+    [
+      "negativa_administrativa",
+      "ilegalidade_nao_incorporacao",
+      "impossibilidade_substituicao",
+      "medicina_baseada_em_evidencias",
+      "imprescindibilidade_laudo",
+      "hipossuficiencia",
+    ],
+  );
+  // Todo requisito precisa de régua de classificação e de fonte citável.
+  for (const r of REQUISITOS_TEMA_6) {
+    assert.ok(r.regraOk.includes("ok:"), `${r.id} sem regra de ok`);
+    assert.match(r.fonte, /CNJ/, `${r.id} sem fonte no corpus`);
+  }
+});
+
+test("o item de substituição exige posologia e tempo de uso, um a um", () => {
+  const c = REQUISITOS_TEMA_6.find((r) => r.id === "impossibilidade_substituicao");
+  assert.match(c!.regraOk, /posologia E tempo de uso/);
+  // Nomear sem posologia e tempo de uso é fraco, não ok.
+  assert.match(c!.regraOk, /sem posologia e tempo de uso/);
 });
 
 test("Tema 6 só libera protocolo com os seis requisitos ok", () => {

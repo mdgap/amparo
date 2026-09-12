@@ -13,6 +13,8 @@ export interface ResultadoCusto {
 export interface ResultadoRota {
   justica: "estadual" | "federal";
   poloPassivo: string[];
+  faixa: "sem_registro_anvisa" | "abaixo_do_piso" | "ressarcimento_federal" | "acima_do_teto";
+  custeio: string;
   fundamento: string[];
   zonaDeAtencao: boolean;
   custo: ResultadoCusto;

@@ -38,9 +38,24 @@ export interface ResultadoCusto {
 
 export type Justica = "estadual" | "federal";
 
+/**
+ * Faixa de custeio do medicamento NÃO incorporado, conforme o Guia Rápido do
+ * CNJ (nov/2025). São três, não duas: o degrau de baixo muda quem paga, não o
+ * foro. `sem_registro_anvisa` precede as demais (Tema 500/STF).
+ */
+export type FaixaCusto =
+  | "sem_registro_anvisa"
+  | "abaixo_do_piso"
+  | "ressarcimento_federal"
+  | "acima_do_teto";
+
 export interface ResultadoRota {
   justica: Justica;
+  /** Quem vai no polo passivo. Município só entra por pactuação na CIB. */
   poloPassivo: string[];
+  faixa: FaixaCusto;
+  /** Quem custeia o tratamento na faixa apurada — não é o mesmo que o polo. */
+  custeio: string;
   fundamento: string[];
   /** true quando o custo fica a menos de 10% do teto — pede conferência humana. */
   zonaDeAtencao: boolean;
@@ -53,6 +68,11 @@ export interface RequisitoTema6 {
   id: string;
   titulo: string;
   descricao: string;
+  /**
+   * Critério objetivo de ok / fraco / falta, transcrito do Guia do CNJ.
+   * Vai literal para o prompt: a régua é do domínio, não do modelo.
+   */
+  regraOk: string;
   fonte: string;
   comoComprovar: string;
 }
