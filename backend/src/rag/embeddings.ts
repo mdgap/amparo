@@ -2,6 +2,11 @@ import { env, temEmbeddings } from "../env.ts";
 
 /**
  * Embeddings pela OpenRouter, com a mesma chave da redação.
+ *
+ * Sem ZDR de propósito: por aqui passa só o corpus normativo, que é público, e
+ * a pergunta de busca, que é o nome do medicamento. Nenhum documento do caso.
+ * Além disso, os modelos de embedding da OpenRouter hoje não têm endpoint ZDR
+ * — exigir travaria a ingestão.
  * `EMBEDDINGS_MODEL=none` (ou chave ausente) desliga a busca vetorial e o RAG
  * cai para busca lexical — o app roda sem nenhuma chave.
  */

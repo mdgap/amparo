@@ -39,6 +39,7 @@ export function App() {
         medicamento: {
           nome: medicamento.nome,
           precoApresentacao: medicamento.precoApresentacao,
+          precoOrigem: medicamento.precoOrigem,
           unidadesPorApresentacao: medicamento.unidadesPorApresentacao,
           registroAnvisa: { possui: medicamento.comRegistroAnvisa },
         },
@@ -94,6 +95,7 @@ export function App() {
 
       {etapa === "conferencia" && (
         <Conferencia
+          documentos={documentos}
           carregando={carregando}
           medicamento={medicamento}
           onAnalisar={() => void analisar()}

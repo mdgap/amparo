@@ -56,6 +56,24 @@ dispensa variável de URL de API no build e gasta **um domínio, não dois**.
   `slug`. Se falhar, registra aviso e a API sobe assim mesmo — o produto tem que
   subir mesmo com a IA fora.
 
+## Lista de preços da CMED
+
+A carga **não** roda no start do container: são 14 MB de planilha e ~26 mil
+linhas, e repetir isso a cada deploy só adiciona fragilidade. Rode uma vez
+depois do primeiro deploy, e de novo quando a CMED publicar lista nova
+(costuma ser mensal):
+
+```bash
+docker compose exec api node dist/scripts/cmed.js
+```
+
+Sem argumento ele descobre o link do PMVG no portal da ANVISA e baixa. Com um
+caminho ou URL, usa o arquivo indicado. No Dokploy dá para deixar isso em
+Schedule Jobs, mensal.
+
+Enquanto a tabela estiver vazia, a etapa de conferência continua funcionando:
+a busca não devolve nada e o advogado digita o preço à mão.
+
 ## Detalhes que não são óbvios
 
 **Timeout do nginx.** A análise completa leva cerca de dois minutos (duas

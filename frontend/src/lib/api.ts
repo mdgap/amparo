@@ -76,6 +76,7 @@ export interface EntradaCaso {
   medicamento: {
     nome: string;
     precoApresentacao: number;
+    precoOrigem?: "cmed" | "orcamento";
     unidadesPorApresentacao: number;
     registroAnvisa?: { possui: boolean };
   };
@@ -104,8 +105,41 @@ async function post<T>(caminho: string, corpo: unknown): Promise<T> {
   return json as T;
 }
 
+/** Uma apresentação da lista de preços da CMED. */
+export interface ApresentacaoCmed {
+  id: number;
+  principio_ativo: string;
+  produto: string;
+  apresentacao: string;
+  laboratorio: string | null;
+  pmvg_0: string | null;
+  unidades_por_apresentacao: number | null;
+  tabela_versao: string;
+}
+
 export const api = {
   analisar: (entrada: EntradaCaso) => post<Analise>("/analise", entrada),
+  reconhecer: async (laudo: string, receita: string) =>
+    post<{
+      achados: {
+        principioAtivo: string;
+        termoEncontrado: string;
+        papel: "pedido" | "ja_tentado" | "indefinido";
+      }[];
+      apresentacoes: ApresentacaoCmed[];
+      posologia: {
+        unidadesPorTomada?: number;
+        tomadasPorDia?: number;
+        diasPorAno?: number;
+        evidencias: string[];
+      };
+    }>("/reconhecer", { laudo, receita }),
+  cmed: async (q: string) => {
+    const r = await fetch(`/api/cmed?q=${encodeURIComponent(q)}`);
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.erro ?? "Falha na busca da CMED");
+    return json as ApresentacaoCmed[];
+  },
   requisitos: async () => {
     const r = await fetch("/api/requisitos");
     return (await r.json()) as {

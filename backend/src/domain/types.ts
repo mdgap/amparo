@@ -9,6 +9,12 @@ export interface Medicamento {
   apresentacao?: string;
   /** Preço da apresentação (PMVG da CMED, em reais). Fonte do número. */
   precoApresentacao: number;
+  /**
+   * De onde veio o preço. "orcamento" é o caminho do Guia do CNJ para quando a
+   * apresentação não consta da CMED: vale como referência PROVISÓRIA para valor
+   * da causa e competência, e o dossiê precisa dizer isso.
+   */
+  precoOrigem?: "cmed" | "orcamento";
   /** Quantas unidades (comprimidos, ml, frascos) vêm na apresentação. */
   unidadesPorApresentacao: number;
   registroAnvisa?: { possui: boolean; numero?: string };
@@ -33,6 +39,8 @@ export interface ResultadoCusto {
   emSalariosMinimos: number;
   salarioMinimoUsado: number;
   tetoEmReais: number;
+  /** true quando o preço é orçamento da parte, não PMVG da CMED. */
+  precoProvisorio: boolean;
   memoria: string[];
 }
 
