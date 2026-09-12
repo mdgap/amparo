@@ -129,7 +129,12 @@ export function FormularioCaso({ carregando, onAnalisar }: Props) {
         </div>
 
         <Checkbox isSelected={temRegistro} onChange={setTemRegistro}>
-          Medicamento com registro na ANVISA
+          <Checkbox.Content>
+            <Checkbox.Control>
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            Medicamento com registro na ANVISA
+          </Checkbox.Content>
         </Checkbox>
 
         <div className="flex flex-col gap-2">

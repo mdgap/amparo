@@ -21,7 +21,7 @@ export function PainelRota({ rota }: { rota: ResultadoRota }) {
       <Card.Content className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Metrica rotulo="Custo anual" valor={brl(rota.custo.custoAnual)} />
-          <Metrica rotulo="Em salários mínimos" valor={`${rota.custo.emSalariosMinimos} SM`} />
+          <Metrica rotulo="Em salários mínimos" valor={`${rota.custo.emSalariosMinimos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} SM`} />
           <Metrica rotulo="Teto (210 SM)" valor={brl(rota.custo.tetoEmReais)} />
           <Metrica rotulo="Polo passivo" valor={rota.poloPassivo.join(" + ")} />
         </div>

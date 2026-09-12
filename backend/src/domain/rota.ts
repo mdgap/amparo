@@ -1,4 +1,4 @@
-import { calcularCustoAnual } from "./custo.ts";
+import { calcularCustoAnual, sm } from "./custo.ts";
 import { PARAMETROS, type Parametros } from "./parametros.ts";
 import type { Medicamento, Posologia, ResultadoRota } from "./types.ts";
 
@@ -41,13 +41,13 @@ export function definirRota(
     justica = "federal";
     poloPassivo = ["União", "Estado", "Município"];
     fundamento.push(
-      `Custo anual de ${custo.emSalariosMinimos} SM supera o teto de ${parametros.tetoCompetenciaEmSalariosMinimos} SM: Justiça Federal, com a União no polo passivo (Tema 1234/STF).`,
+      `Custo anual de ${sm(custo.emSalariosMinimos)} supera o teto de ${parametros.tetoCompetenciaEmSalariosMinimos} SM: Justiça Federal, com a União no polo passivo (Tema 1234/STF).`,
     );
   } else {
     justica = "estadual";
     poloPassivo = ["Estado", "Município"];
     fundamento.push(
-      `Custo anual de ${custo.emSalariosMinimos} SM não supera o teto de ${parametros.tetoCompetenciaEmSalariosMinimos} SM: Justiça Estadual, contra Estado e Município (Tema 1234/STF).`,
+      `Custo anual de ${sm(custo.emSalariosMinimos)} não supera o teto de ${parametros.tetoCompetenciaEmSalariosMinimos} SM: Justiça Estadual, contra Estado e Município (Tema 1234/STF).`,
     );
   }
 
