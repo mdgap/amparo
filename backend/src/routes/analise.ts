@@ -8,6 +8,7 @@ import { redigirDossie } from "../llm/redigirDossie.ts";
 import { PROMPT_VERSAO } from "../llm/prompts/sistema.ts";
 import { query } from "../db.ts";
 import { temLLM } from "../env.ts";
+import { anonimizarVarios } from "../documentos/anonimizar.ts";
 
 const medicamentoSchema = z.object({
   nome: z.string().min(1),
@@ -82,8 +83,26 @@ export async function rotasDeAnalise(app: FastifyInstance) {
       };
     }
 
+    // Ponto de estrangulamento: NADA vai para o modelo sem passar por aqui.
+    // A rota de upload já anonimiza o PDF, mas texto colado direto na caixa
+    // chegaria cru — e é o caminho mais usado.
+    const ordem = ["laudo", "receita", "notaENatJus", "requerimentoAdministrativo"] as const;
+    const limpos = await anonimizarVarios(ordem.map((c) => documentos[c] ?? "")).catch(
+      () => null,
+    );
+    if (!limpos) {
+      return reply.code(503).send({
+        erro:
+          "O serviço de anonimização não respondeu. A análise não foi executada — " +
+          "nenhum texto é enviado ao modelo sem passar por ele.",
+      });
+    }
+    const anonimizados = Object.fromEntries(
+      ordem.map((campo, i) => [campo, limpos.textos[i]!]),
+    ) as Record<(typeof ordem)[number], string>;
+
     const { avaliacoes, alertaENatJus, fontes } = await analisarTema6({
-      ...documentos,
+      ...anonimizados,
       medicamento: medicamento.nome,
     });
     const resumo = resumirTema6(avaliacoes);
@@ -105,6 +124,12 @@ export async function rotasDeAnalise(app: FastifyInstance) {
       ],
     ).catch((e) => app.log.warn({ e }, "análise não persistida"));
 
-    return { rota, tema6, dossie, parametrosVersao: PARAMETROS.versao };
+    return {
+      rota,
+      tema6,
+      dossie,
+      anonimizacao: { removidos: limpos.removidos, total: limpos.total },
+      parametrosVersao: PARAMETROS.versao,
+    };
   });
 }

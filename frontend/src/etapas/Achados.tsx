@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Alert, Button } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
 import { Estado } from "../components/Estado.tsx";
-import { IconeBalanca, IconeChevron, IconeDocumento, IconeSeta } from "../components/Icones.tsx";
+import { IconeBalanca, IconeChevron, IconeDocumento, IconeOk, IconeSeta } from "../components/Icones.tsx";
 import { brl, type Analise, type RequisitoTema6, type StatusRequisito } from "../lib/api.ts";
 import { CAMPOS_DOCUMENTO, type Documentos } from "../lib/caso.ts";
 
@@ -35,6 +35,20 @@ export function Achados({ analise, catalogo, documentos, onVoltar, onVerDossie }
       />
 
       <RotaResumo rota={rota} />
+
+      {analise.anonimizacao && analise.anonimizacao.total > 0 && (
+        <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+          <IconeOk className="size-4 shrink-0 text-[var(--status-ok-fg)]" />
+          <span>
+            Antes da análise, {analise.anonimizacao.total} dado(s) pessoal(is)
+            foram substituídos por marcador:{" "}
+            {Object.entries(analise.anonimizacao.removidos)
+              .map(([marcador, n]) => `${n}× ${marcador}`)
+              .join(", ")}
+            . O modelo não recebeu nome, documento nem contato.
+          </span>
+        </p>
+      )}
 
       {analise.aviso && (
         <Alert className="mt-6" status="warning">

@@ -32,6 +32,29 @@ async function vocabularioClinico(): Promise<string[]> {
   return preservar;
 }
 
+/**
+ * Anonimiza vários documentos de uma vez, preservando a separação entre eles.
+ * Devolve os textos na mesma ordem e o placar somado.
+ */
+export async function anonimizarVarios(
+  textos: string[],
+): Promise<{ textos: string[]; removidos: Record<string, number>; total: number }> {
+  const limpos = await Promise.all(
+    textos.map((t) => (t.trim() ? anonimizar(t) : Promise.resolve(null))),
+  );
+  const removidos: Record<string, number> = {};
+  for (const l of limpos) {
+    for (const [marcador, n] of Object.entries(l?.removidos ?? {})) {
+      removidos[marcador] = (removidos[marcador] ?? 0) + n;
+    }
+  }
+  return {
+    textos: limpos.map((l, i) => l?.texto ?? textos[i]!),
+    removidos,
+    total: Object.values(removidos).reduce((a, b) => a + b, 0),
+  };
+}
+
 export async function anonimizar(texto: string): Promise<TextoAnonimizado> {
   const resp = await fetch(`${env.ANONIMIZADOR_URL}/anonimizar`, {
     method: "POST",

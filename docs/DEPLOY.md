@@ -114,8 +114,14 @@ Vocabulário clínico é preservado: o backend manda os princípios ativos da CM
 junto, senão o modelo apaga "lamotrigina" como se fosse nome de gente. Termo
 precedido de "síndrome de", "doença de" e afins também escapa.
 
-**Falha fechada.** Se o `anonimizador` não responder, a rota devolve 503 e o
-documento não é processado. Devolver texto identificado em silêncio seria pior
+**Dois pontos de passagem.** O upload de PDF anonimiza na entrada; a rota de
+análise anonimiza de novo, imediatamente antes de o texto ir ao modelo. O
+segundo é o que garante: cobre também o texto colado direto na caixa, que é o
+caminho mais usado. Anonimizar duas vezes é inofensivo — marcador não é dado
+pessoal.
+
+**Falha fechada.** Se o `anonimizador` não responder, tanto o upload quanto a
+análise devolvem 503 e nada é processado. Devolver texto identificado em silêncio seria pior
 que não funcionar.
 
 Custo: a imagem carrega o modelo `pt_core_news_lg`. Conte ~2 GB de memória e

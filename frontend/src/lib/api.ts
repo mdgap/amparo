@@ -55,6 +55,11 @@ export interface Dossie {
   trechoDePeticao: string;
 }
 
+export interface Anonimizacao {
+  removidos: Record<string, number>;
+  total: number;
+}
+
 export interface Analise {
   rota: ResultadoRota;
   tema6: {
@@ -68,6 +73,8 @@ export interface Analise {
     fontes: Fonte[];
   } | null;
   dossie: Dossie | null;
+  /** Placar da anonimização feita antes de o texto ir ao modelo. */
+  anonimizacao?: Anonimizacao;
   aviso?: string;
   parametrosVersao: string;
 }
