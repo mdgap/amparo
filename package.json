@@ -1,0 +1,18 @@
+{
+  "name": "mindthegap",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Triagem assistida por IA para ações de medicamentos contra o SUS (Tema 1234 / Tema 6 do STF)",
+  "license": "MIT",
+  "workspaces": ["backend", "frontend"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "npm run dev --workspace=backend & npm run dev --workspace=frontend",
+    "dev:api": "npm run dev --workspace=backend",
+    "dev:web": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=backend && npm run build --workspace=frontend",
+    "test": "npm run test --workspace=backend",
+    "db:migrate": "npm run db:migrate --workspace=backend",
+    "db:ingest": "npm run db:ingest --workspace=backend"
+  }
+}
