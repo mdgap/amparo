@@ -107,7 +107,7 @@ export const IconeBalanca = (p: Props) => (
   </Svg>
 );
 
-/* Ícones da identidade Juscare — mesmos traços da biblioteca Lucide. */
+/* Ícones da identidade Amparo — mesmos traços da biblioteca Lucide. */
 
 export const IconeInfo = (p: Props) => (
   <Svg {...p}>

@@ -142,10 +142,10 @@ export function Sobre({ onNovoCaso }: Props) {
             <IconeSeta className="size-5" />
           </Button>
         }
-        descricao="Triagem de ações de medicamento contra o SUS. O advogado envia os documentos do caso; o juscare calcula a rota processual pelo Tema 1234, confere os seis requisitos do Tema 6 com fonte oficial e redige as minutas para revisão."
+        descricao="Triagem de ações de medicamento contra o SUS. O advogado envia os documentos do caso; o Amparo calcula a rota processual pelo Tema 1234, confere os seis requisitos do Tema 6 com fonte oficial e redige as minutas para revisão."
         passo="Sobre nós"
         secao={null}
-        titulo="Como o juscare funciona"
+        titulo="Como o Amparo funciona"
       />
 
       <section aria-labelledby="sobre-passo-a-passo">
@@ -220,7 +220,7 @@ export function Sobre({ onNovoCaso }: Props) {
           Como protegemos os dados do paciente
         </h2>
         <p className="mb-4 max-w-[50rem] text-sm leading-relaxed text-muted">
-          O juscare trabalha sem identificar o paciente. Isto é o que o sistema
+          O Amparo trabalha sem identificar o paciente. Isto é o que o sistema
           faz com cada documento enviado.
         </p>
         <div className="grid gap-3 md:grid-cols-2">

@@ -47,11 +47,16 @@ export function Shell({ etapa, liberadas, onIr, children }: Props) {
         aria-label="Etapas da análise"
         className="sticky top-0 z-10 flex flex-col border-b border-[var(--sidebar-border)] bg-[var(--sidebar)] px-4 py-4 lg:h-dvh lg:border-b-0 lg:border-e lg:px-4 lg:pb-6 lg:pt-8"
       >
-        <div className="flex items-center gap-2.5 px-1 lg:px-3">
-          <span className="gradiente-marca size-7 rounded-[0.5625rem]" />
-          <span className="fonte-display text-[1.6rem] font-bold tracking-[-0.08rem]">
-            juscare
-          </span>
+        {/* Logo escura: a lateral é clara. A versão clara fica em public/ para
+            superfícies escuras. */}
+        <div className="px-1 lg:px-3">
+          <img
+            alt="Amparo"
+            className="h-8 w-auto lg:h-9"
+            height={548}
+            src="/amparo_logo_escura.png"
+            width={2048}
+          />
         </div>
 
         <button
