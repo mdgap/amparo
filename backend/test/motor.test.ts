@@ -5,7 +5,9 @@ import { definirRota, orgaoAdministrativo } from "../src/domain/rota.ts";
 import {
   alertaDeNulidade, avaliacoesSemRegistroAnvisa, resumirTema6, REQUISITOS_TEMA_6,
 } from "../src/domain/tema6.ts";
-import { semMarkdown, semNulos } from "../src/llm/tolerante.ts";
+import {
+  comFontesPorExtenso, semMarkdown, semNulos,
+} from "../src/llm/tolerante.ts";
 import { montarPromptDossie } from "../src/llm/redigirDossie.ts";
 import { montarPromptTema6, semTagsDeControle } from "../src/llm/analisarTema6.ts";
 import { SISTEMA } from "../src/llm/prompts/sistema.ts";
@@ -703,4 +705,31 @@ test("sem nota do NAT-Jus, a petição é avisada do risco de nulidade", () => {
   // E a peça tem de enfrentar os dois pontos do item 3 na inicial.
   assert.match(prompt, /controle de legalidade/);
   assert.match(prompt, /consulta prévia ao NAT-Jus/);
+});
+
+test("marcador de fonte vira o nome da norma na peça copiada", () => {
+  const fontes = [
+    { documento: "Guia Rápido de Judicialização em Saúde — Medicamentos no SUS", ancora: "SV 61" },
+    { documento: "Tema 106 do STJ (REsp 1.657.156) — medicamentos não incorporados", ancora: "tese firmada — três requisitos" },
+    { documento: "Tema 6 da Repercussão Geral do STF (RE 566.471) — alto custo", ancora: null },
+  ];
+  const troca = (s: string) => comFontesPorExtenso(s, fontes);
+
+  // "fonte [Fn]" sai inteiro, e a pontuação em volta fica intacta.
+  assert.equal(
+    troca("Negativa expressa – fonte [F2];"),
+    "Negativa expressa – Tema 106 do STJ (REsp 1.657.156), tese firmada;",
+  );
+
+  // Marcador solto ganha parêntese.
+  assert.equal(troca("O requisito está atendido [F1]."), "O requisito está atendido (Guia Rápido de Judicialização em Saúde, SV 61).");
+
+  // O parêntese que já existe no texto é reaproveitado, não duplicado.
+  assert.equal(troca("Nos termos da tese (fonte: [F3]), cabe à União."), "Nos termos da tese (Tema 6 da Repercussão Geral do STF (RE 566.471)), cabe à União.");
+
+  // Marcador sem fonte correspondente é erro do modelo: fica visível, não some.
+  assert.equal(troca("Afirmação sem respaldo [F9]."), "Afirmação sem respaldo (sem fonte no corpus).");
+
+  // Nenhum [Fn] sobra para ser copiado para dentro de uma petição.
+  assert.ok(!/\[F\d+\]/.test(troca("Conforme fontes [F1] e [F2], a competência é federal.")));
 });

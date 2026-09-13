@@ -4,9 +4,10 @@ import type { Fonte } from "../lib/api.ts";
 /**
  * Os trechos do corpus que o modelo recebeu, na ordem em que foram numerados.
  *
- * Os fundamentos das minutas apontam para eles como [F1], [F2]. Sem esta
- * lista o marcador não tem como ser resolvido: quem lê a peça não descobre de
- * qual norma a afirmação saiu, e a citação vira referência morta.
+ * O modelo os recebe numerados como [F1], [F2] e cita por esse marcador; na
+ * saída, `comFontesPorExtenso` troca o marcador pelo nome da norma, porque a
+ * peça é copiada para fora do produto. Esta lista é o outro lado disso: mostra
+ * o trecho exato por trás de cada citação e o link do portal de origem.
  *
  * A numeração vale só para esta análise: a busca no corpus é feita por caso.
  */
@@ -22,9 +23,9 @@ export function Fontes({ fontes }: { fontes: Fonte[] }) {
           Fontes citadas nesta análise
         </h2>
         <p className="mt-1 text-sm text-muted">
-          Os {fontes.length} trechos do corpus oficial enviados ao modelo. Os
-          fundamentos das minutas apontam para eles por [F1], [F2]. A numeração
-          vale só para este caso: a busca é refeita a cada análise.
+          Os {fontes.length} trechos do corpus oficial enviados ao modelo nesta
+          análise. As minutas citam estas normas pelo nome; aqui está o trecho
+          exato que sustentou cada citação, com o link para o portal de origem.
         </p>
       </div>
 

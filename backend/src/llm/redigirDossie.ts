@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { pedirJSON } from "./cliente.ts";
-import { listaDeTextos, semMarkdown } from "./tolerante.ts";
+import { comFontesPorExtenso, listaDeTextos, semMarkdown } from "./tolerante.ts";
 import { SISTEMA } from "./prompts/sistema.ts";
 import { montarContexto, type TrechoEncontrado } from "../rag/busca.ts";
 import { orgaoAdministrativo } from "../domain/rota.ts";
@@ -108,13 +108,18 @@ export async function redigirDossie(args: {
   const registro = { sistema: SISTEMA, usuario: prompt };
 
   // A instrução no prompt reduz o Markdown; a limpeza aqui é o que garante.
+  // E o marcador [F2] vira o nome da norma: as peças são copiadas para fora do
+  // produto, onde o número não significa nada e nem é estável entre análises.
+  const limpar = (texto: string) =>
+    comFontesPorExtenso(semMarkdown(texto), args.fontes);
+
   return {
     ...dossie,
-    memorandoDeRota: semMarkdown(dossie.memorandoDeRota),
-    requerimentoAdministrativo: semMarkdown(dossie.requerimentoAdministrativo),
-    resumoDeEvidencia: semMarkdown(dossie.resumoDeEvidencia),
-    trechoDePeticao: semMarkdown(dossie.trechoDePeticao),
-    pendenciasDoCliente: dossie.pendenciasDoCliente.map(semMarkdown),
+    memorandoDeRota: limpar(dossie.memorandoDeRota),
+    requerimentoAdministrativo: limpar(dossie.requerimentoAdministrativo),
+    resumoDeEvidencia: limpar(dossie.resumoDeEvidencia),
+    trechoDePeticao: limpar(dossie.trechoDePeticao),
+    pendenciasDoCliente: dossie.pendenciasDoCliente.map(limpar),
     prompt: registro,
   };
 }
