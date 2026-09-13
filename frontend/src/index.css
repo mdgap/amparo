@@ -2,7 +2,7 @@
 @import "@heroui/styles";
 
 /* ---------------------------------------------------------------------------
-   MindTheGap — design system
+   Amparo — design system
    Paleta institucional aplicada sobre os tokens semânticos do HeroUI v3.
    Regra de cor: verde-escuro sobre superfície clara, branco sobre verde-escuro.
    O verde da marca (#00CB7C) nunca carrega texto — ele marca elemento ativo,
@@ -129,7 +129,7 @@ h1, h2, h3, .fonte-display {
 }
 
 
-/* --- Identidade visual Juscare --------------------------------------- */
+/* --- Identidade visual Amparo ---------------------------------------- */
 
 .gradiente-acao {
   background: var(--gradiente-acao);

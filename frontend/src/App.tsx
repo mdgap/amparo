@@ -120,8 +120,12 @@ export function App() {
   return (
     <ProvedorDeAjuda>
     <Shell etapa={etapa} liberadas={liberadas} onIr={setEtapa}>
+      {/* Avisos acima do cabeçalho da tela. O <main> não tem respiro no topo
+          (quem dá é o Cabeçalho), então o bloco traz o próprio. */}
+      {(erro || carregando || (reaberta && (etapa === "achados" || etapa === "dossie"))) && (
+      <div className="flex flex-col gap-4 pt-6 lg:pt-8">
       {erro && (
-        <Alert className="mb-6" status="danger">
+        <Alert status="danger">
           <Alert.Indicator />
           <Alert.Content>
             <Alert.Title>{erro.titulo}</Alert.Title>
@@ -131,13 +135,13 @@ export function App() {
       )}
 
       {carregando && (
-        <div aria-live="polite" className="mb-6">
+        <div aria-live="polite">
           <Progresso passos={passos} />
         </div>
       )}
 
       {reaberta && (etapa === "achados" || etapa === "dossie") && (
-        <Alert className="mb-6" status="accent">
+        <Alert status="accent">
           <Alert.Indicator />
           <Alert.Content>
             <Alert.Title>{reaberta.codigo}, reaberto do histórico</Alert.Title>
@@ -153,6 +157,8 @@ export function App() {
             </Alert.Description>
           </Alert.Content>
         </Alert>
+      )}
+      </div>
       )}
 
       {etapa === "painel" && (
