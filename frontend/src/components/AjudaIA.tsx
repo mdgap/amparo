@@ -30,7 +30,12 @@ export function ProvedorDeAjuda({ children }: { children: ReactNode }) {
   return <Contexto.Provider value={pontos}>{children}</Contexto.Provider>;
 }
 
-const ROTULO: Record<PontoDeIA["natureza"], { texto: string; Icone: typeof IconeInfo }> = {
+/** Catálogo inteiro, para a tela Sobre nós. `null` enquanto carrega. */
+export function usePontosDeIA() {
+  return useContext(Contexto);
+}
+
+export const ROTULO: Record<PontoDeIA["natureza"], { texto: string; Icone: typeof IconeInfo }> = {
   ia: { texto: "Modelo de linguagem", Icone: IconeInfo },
   deterministico: { texto: "Regra determinística", Icone: IconeCalculadora },
   modelo_local: { texto: "Modelo local, na nossa infraestrutura", Icone: IconeEscudo },
