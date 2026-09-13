@@ -75,7 +75,7 @@ export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
     descricao:
       "Laudo fundamentado e circunstanciado do médico que assiste o paciente, comprovando a imprescindibilidade do medicamento, descrevendo o tratamento já realizado e atestando a ineficácia dos fármacos fornecidos pelo SUS para a moléstia.",
     regraOk:
-      "ok: os CINCO elementos estão presentes. fraco: falta um ou mais dos cinco, e a saída deve dizer QUAL falta. falta: laudo ausente ou genérico.",
+      "Confira DOIS elementos da tese e QUATRO de forma do laudo. Da tese: (a) imprescindibilidade do medicamento para este paciente; (b) ineficácia, para a moléstia, dos fármacos fornecidos pelo SUS, com o tratamento já realizado descrito. De forma: CID; histórico de tratamentos com datas; justificativa da dose; justificativa da duração; e assinatura com CRM do médico assistente. ok: os dois da tese presentes E o laudo assinado com CRM. fraco: falta algum elemento, e a saída deve dizer QUAL falta e se o que falta é da tese ou de forma. falta: laudo ausente, genérico, ou que não atesta a ineficácia dos fármacos do SUS.",
     fonte:
       "Tema 6/STF (RE 566.471), item 2, alínea 'e'; Tema 106/STJ (REsp 1.657.156), requisito (i); Guia Rápido do CNJ (nov/2025), item 3.1, requisito 5, e item 5",
     comoComprovar:
