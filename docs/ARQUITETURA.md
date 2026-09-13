@@ -41,16 +41,24 @@ projeto: sem chave de embeddings o `pg_trgm` cobre a demo.
 ## O que não é persistido
 
 Laudo, receita e nota do e-NatJus são processados em memória e descartados. A
-tabela `analise` guarda a entrada numérica, o resultado do motor, a avaliação e
-o dossiê — nada que identifique o paciente.
+tabela `analise` guarda a entrada do caso (medicamento, preço e posologia), o
+resultado do motor, o status e as contagens da avaliação do Tema 6 e o dossiê —
+nada que identifique o paciente. O registro é montado campo a campo em
+`domain/historico.ts`: evidências literais, justificativas e pendências
+redigidas pelo modelo ficam fora do banco, porque citam o laudo. Análise feita
+só pelo motor, sem chave de IA, também entra no histórico, com `tema6` nulo.
+
+Erro não devolve nem registra a mensagem original, que pode trazer texto do
+documento — um provedor que ecoa o prompt, um erro de banco com os valores da
+linha. Resposta e log levam só status, código e tipo do erro (`erros.ts`).
 
 ## Degradação
 
 | Falta | Efeito |
 |---|---|
-| `ANTHROPIC_API_KEY` | Só o motor de regras; dossiê não é gerado, com aviso na UI |
-| `VOYAGE_API_KEY` | Busca lexical em vez de vetorial |
-| Banco indisponível | `/api/rota` continua respondendo (motor puro, sem I/O) |
+| `OPENROUTER_API_KEY` | Só o motor de regras; dossiê não é gerado, com aviso na UI. A análise entra no histórico sem avaliação |
+| `EMBEDDINGS_MODEL=none` | Busca lexical em vez de vetorial |
+| Banco indisponível | `/api/rota` e `/api/analise` continuam respondendo (a análise só não é gravada); `/api/analises` e `/api/metricas` respondem 503 |
 
 ## Interface
 
