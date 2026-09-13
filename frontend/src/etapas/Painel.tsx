@@ -89,6 +89,7 @@ export function Painel({ catalogo, abrindo, onAbrir, onNovoCaso }: Props) {
         <Cabecalho
           descricao="Métricas dos últimos movimentos e o histórico das análises. Nada aqui identifica paciente: cada caso aparece pelo código, pelo medicamento e pela data."
           passo="Painel"
+          secao={null}
           titulo="Casos analisados"
         />
         {/* No estado vazio a ação principal fica no convite, não duplicada aqui. */}

@@ -9,12 +9,15 @@ export function Cabecalho({
   descricao,
   passo,
   etapaAtual,
+  secao = "Análise do caso",
 }: {
   titulo: string;
   descricao: string;
   passo: string;
   /** 1 a 4. Sem isso, a trilha não é desenhada. */
   etapaAtual?: number;
+  /** Primeiro nível da trilha. `null` em tela de raiz, como o painel. */
+  secao?: string | null;
 }) {
   return (
     <>
@@ -24,10 +27,14 @@ export function Cabecalho({
         aria-label="Trilha de navegação"
         className="flex h-[3.875rem] items-center gap-3 border-b border-[var(--border)] text-xs text-muted"
       >
-        <span>Análise do caso</span>
-        <span aria-hidden="true" className="text-[#75877c]">
-          /
-        </span>
+        {secao && (
+          <>
+            <span>{secao}</span>
+            <span aria-hidden="true" className="text-[#75877c]">
+              /
+            </span>
+          </>
+        )}
         <span className="text-foreground">{titulo}</span>
       </nav>
 
