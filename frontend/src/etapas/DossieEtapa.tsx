@@ -22,11 +22,11 @@ const DESTAQUE_POR_PECA: Record<PecaId | "pendencias", string> = {
   memorandoDeRota:
     "Item 1 da tarefa: memorando interno explicando foro, polo passivo e a memória de cálculo, com as fontes citadas.",
   requerimentoAdministrativo:
-    "Item 2 da tarefa: minuta de requerimento à secretaria de saúde, com [NOME], [CPF] e [ENDEREÇO] como lacunas — dado de paciente não entra.",
+    "Item 2 da tarefa: minuta de requerimento à secretaria de saúde, com [NOME], [CPF] e [ENDEREÇO] como lacunas: dado de paciente não entra.",
   resumoDeEvidencia:
     "Item 3 da tarefa: o que os documentos do caso já provam, requisito a requisito.",
   trechoDePeticao:
-    "Item 5 da tarefa: trecho de petição sobre competência e cabimento — apenas essa parte, não a petição inteira.",
+    "Item 5 da tarefa: trecho de petição sobre competência e cabimento, apenas essa parte, não a petição inteira.",
   pendencias:
     "Item 4 da tarefa: lista objetiva do que pedir ao cliente, em ordem de urgência. As pendências apuradas em código entram no prompt como insumo.",
 };

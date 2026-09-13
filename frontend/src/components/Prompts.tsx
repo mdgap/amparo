@@ -94,7 +94,7 @@ export function Prompts({ prompts }: { prompts: PromptsDaAnalise }) {
         ))}
 
         <p className="border-t border-[var(--border)] pt-4 text-sm text-muted">
-          Os documentos aparecem aqui como o modelo os recebeu — já anonimizados.
+          Os documentos aparecem aqui como o modelo os recebeu, já anonimizados.
           Os números de custo, foro e polo passivo chegam prontos, com instrução
           explícita de não recalcular.
         </p>

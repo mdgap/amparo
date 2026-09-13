@@ -56,7 +56,7 @@ export function definirRota(
     custeio = "União";
     fundamento.push(
       "Medicamento sem registro na ANVISA: competência da Justiça Federal, com a União no polo passivo (Tema 500/STF).",
-      "Regra geral: a ausência de registro IMPEDE o fornecimento judicial. A exceção por mora irrazoável da ANVISA exige três requisitos cumulativos — pedido de registro no Brasil (salvo órfãos e doenças raras), registro em agência internacional renomada e inexistência de substituto terapêutico registrado no Brasil.",
+      "Regra geral: a ausência de registro IMPEDE o fornecimento judicial. A exceção por mora irrazoável da ANVISA exige três requisitos cumulativos: pedido de registro no Brasil (salvo órfãos e doenças raras), registro em agência internacional renomada e inexistência de substituto terapêutico registrado no Brasil.",
     );
   } else if (atingeOTeto) {
     justica = "federal";
@@ -87,7 +87,7 @@ export function definirRota(
   if (parametros.municipioRespondePorNaoIncorporado && justica === "estadual") {
     poloPassivo.push("Município");
     fundamento.push(
-      "Município incluído no polo passivo por pactuação na CIB do Estado — confira a pactuação vigente antes de protocolar.",
+      "Município incluído no polo passivo por pactuação na CIB do Estado. Confira a pactuação vigente antes de protocolar.",
     );
   } else if (justica === "estadual") {
     fundamento.push(
@@ -97,7 +97,7 @@ export function definirRota(
 
   if (medicamento.incorporadoSus === true) {
     fundamento.push(
-      "ATENÇÃO: medicamento informado como INCORPORADO ao SUS. Nesse caso a competência vem do Componente da assistência farmacêutica (CBAF, CESAF, CEAF 1A/1B/2/3), não da faixa de custo — esta rota não se aplica e precisa de conferência humana.",
+      "ATENÇÃO: medicamento informado como INCORPORADO ao SUS. Nesse caso a competência vem do Componente da assistência farmacêutica (CBAF, CESAF, CEAF 1A/1B/2/3), não da faixa de custo. Esta rota não se aplica e precisa de conferência humana.",
     );
   }
 
@@ -112,7 +112,7 @@ export function definirRota(
 
   if (zonaDeAtencao) {
     fundamento.push(
-      "Atenção: o custo está a menos de 10% do teto. Confira preço CMED e posologia antes de protocolar — pequena variação muda o foro.",
+      "Atenção: o custo está a menos de 10% do teto. Confira preço CMED e posologia antes de protocolar: pequena variação muda o foro.",
     );
   }
 

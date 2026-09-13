@@ -14,7 +14,7 @@ const PROTECAO = [
   {
     titulo: "Anonimização antes de tudo",
     texto:
-      "Nome, CPF, cartão do SUS, CNPJ, CEP, CRM, telefone, e-mail e local viram marcador — [NOME], [CPF], [CARTAO SUS] — antes de qualquer outra etapa. Roda num serviço próprio, na nossa infraestrutura: o texto identificado não sai daqui.",
+      "Nome, CPF, cartão do SUS, CNPJ, CEP, CRM, telefone, e-mail e local viram marcador ([NOME], [CPF], [CARTAO SUS]) antes de qualquer outra etapa. Roda num serviço próprio, na nossa infraestrutura: o texto identificado não sai daqui.",
   },
   {
     titulo: "Marcador, não apagamento",
@@ -29,7 +29,7 @@ const PROTECAO = [
   {
     titulo: "O que fica guardado",
     texto:
-      "Guardamos os dados do caso (medicamento, preço e posologia), a rota calculada, a situação de cada requisito e as minutas. Não guardamos os documentos, os trechos citados, as justificativas do modelo nem os prompts — e os erros não registram texto de documento.",
+      "Guardamos os dados do caso (medicamento, preço e posologia), a rota calculada, a situação de cada requisito e as minutas. Não guardamos os documentos, os trechos citados, as justificativas do modelo nem os prompts, e os erros não registram texto de documento.",
   },
   {
     titulo: "Arquivos",
@@ -74,7 +74,6 @@ export function Sobre({ onNovoCaso }: Props) {
   const [ambiente, setAmbiente] = useState<{
     versao: string;
     salarioMinimo: number;
-    iaDisponivel: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -84,7 +83,6 @@ export function Sobre({ onNovoCaso }: Props) {
         setAmbiente({
           versao: r.parametros.versao,
           salarioMinimo: r.parametros.salarioMinimo.valorMensal,
-          iaDisponivel: r.iaDisponivel,
         }),
       )
       .catch(() => setAmbiente(null));
@@ -145,7 +143,7 @@ export function Sobre({ onNovoCaso }: Props) {
 
       <section aria-labelledby="sobre-ia" className="mt-10">
         <h2 className="fonte-display mb-1 text-lg font-bold" id="sobre-ia">
-          Onde entra IA — e onde não entra
+          Onde entra IA e onde não entra
         </h2>
         <p className="mb-4 max-w-[50rem] text-sm leading-relaxed text-muted">
           Cada ponto abaixo é lido do código do sistema, com a natureza de cada
@@ -199,23 +197,6 @@ export function Sobre({ onNovoCaso }: Props) {
             <strong className="font-semibold">Ferramenta de apoio à triagem.</strong>{" "}
             As saídas são minutas revisáveis e não substituem a conferência do
             advogado responsável.
-          </li>
-          <li>
-            <strong className="font-semibold">Verde é evidência, não aprovação.</strong>{" "}
-            Nos achados, verde indica evidência localizada no documento — nunca
-            aprovação jurídica.
-          </li>
-          <li>
-            <strong className="font-semibold">Sem a chave do modelo de linguagem,</strong>{" "}
-            o sistema funciona só com o motor de regras: calcula a rota, mas não
-            lê os documentos nem redige as minutas.
-            {ambiente && (
-              <span className="text-muted">
-                {" "}
-                Neste ambiente a leitura por IA está{" "}
-                {ambiente.iaDisponivel ? "ativa" : "desligada"}.
-              </span>
-            )}
           </li>
           {ambiente && (
             <li className="num text-muted">

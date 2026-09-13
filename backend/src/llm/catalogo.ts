@@ -136,7 +136,7 @@ export function catalogoDePontos(): PontoDeIA[] {
         {
           trecho: "REQUISITOS A AVALIAR + REGRA DE CLASSIFICAÇÃO",
           explicacao:
-            "Cada requisito vai com a régua de ok/fraco/falta transcrita do Guia do CNJ. A régua é do domínio, versionada em backend/src/domain/tema6.ts — não fica a critério do modelo.",
+            "Cada requisito vai com a régua de ok/fraco/falta transcrita do Guia do CNJ. A régua é do domínio, versionada em backend/src/domain/tema6.ts. Não fica a critério do modelo.",
         },
         {
           trecho: "DOCUMENTOS DO CASO",
@@ -150,7 +150,7 @@ export function catalogoDePontos(): PontoDeIA[] {
         },
       ],
       saida:
-        "JSON com um objeto por requisito — id, status, justificativa, evidências e pendência — mais o alerta do e-NatJus. A tela usa o status no selo, a justificativa no resumo, as evidências no trecho expandido e a pendência na próxima ação.",
+        "JSON com um objeto por requisito (id, status, justificativa, evidências e pendência) mais o alerta do e-NatJus. A tela usa o status no selo, a justificativa no resumo, as evidências no trecho expandido e a pendência na próxima ação.",
       limites:
         "O modelo classifica; quem decide protocolar é o advogado. Requisito não devolvido pelo modelo entra como 'não analisado' e bloqueia o apto para protocolo. Sem chave de API, a etapa não roda e os seis ficam como não analisados.",
     },
@@ -162,7 +162,7 @@ export function catalogoDePontos(): PontoDeIA[] {
       oQueFaz:
         "Redige, em uma única chamada, o memorando de rota, o requerimento administrativo, o resumo de evidência, a lista de pendências e o trecho de petição.",
       porQue:
-        "Escrever minuta é gerar linguagem. Os números, porém, chegam prontos do motor de regras, com instrução explícita de repetir sem recalcular — é o que impede o modelo de produzir um valor de causa próprio.",
+        "Escrever minuta é gerar linguagem. Os números, porém, chegam prontos do motor de regras, com instrução explícita de repetir sem recalcular. É o que impede o modelo de produzir um valor de causa próprio.",
       entradas: [
         "Rota calculada pelo motor: justiça, polo passivo, custeio e fundamento",
         "Memória de cálculo, linha a linha",
@@ -226,9 +226,9 @@ export function catalogoDePontos(): PontoDeIA[] {
       natureza: "deterministico",
       arquivo: "backend/src/domain/cmed.ts",
       oQueFaz:
-        "Encontra o princípio ativo cruzando o texto com o vocabulário fechado da CMED, e lê a posologia por padrão de escrita — '1 comprimido', 'de 12 em 12 horas', 'uso contínuo'.",
+        "Encontra o princípio ativo cruzando o texto com o vocabulário fechado da CMED, e lê a posologia por padrão de escrita: '1 comprimido', 'de 12 em 12 horas', 'uso contínuo'.",
       porQue:
-        "Não usa modelo. O vocabulário da CMED é finito e oficial, então o que não está nele não é medicamento — e nome de paciente nunca casa com princípio ativo. A garantia é estrutural, não probabilística.",
+        "Não usa modelo. O vocabulário da CMED é finito e oficial, então o que não está nele não é medicamento, e nome de paciente nunca casa com princípio ativo. A garantia é estrutural, não probabilística.",
       entradas: ["Texto do laudo e da receita", "Vocabulário de princípios ativos da tabela CMED"],
       saida:
         "Lista de princípios ativos citados, separando o provável pedido do que já foi tentado, e os três campos de posologia sugeridos na etapa 2.",
@@ -243,16 +243,16 @@ export function catalogoDePontos(): PontoDeIA[] {
       oQueFaz:
         "Apura dois dos seis requisitos a partir do que foi informado na conferência: a situação do medicamento na CONITEC e a prova de hipossuficiência.",
       porQue:
-        "Não usa modelo, e antes usava. Situação na CONITEC vem de consulta ao portal, e hipossuficiência vem de declaração e comprovante — nenhum dos dois está no laudo ou na receita. Pedir ao modelo que os encontrasse nos documentos produzia 'falta' em todo caso, não por falha dele, mas porque o dado nunca era perguntado.",
+        "Não usa modelo, e antes usava. Situação na CONITEC vem de consulta ao portal, e hipossuficiência vem de declaração e comprovante: nenhum dos dois está no laudo ou na receita. Pedir ao modelo que os encontrasse nos documentos produzia 'falta' em todo caso, não por falha dele, mas porque o dado nunca era perguntado.",
       entradas: [
-        "Situação na CONITEC: nunca avaliado, em análise desde uma data, ou recomendação desfavorável — proposta pelo painel público de tecnologias demandadas, confirmada pelo advogado",
+        "Situação na CONITEC: nunca avaliado, em análise desde uma data, ou recomendação desfavorável, proposta pelo painel público de tecnologias demandadas, confirmada pelo advogado",
         "Se houve demonstração da ilegalidade do ato, quando a recomendação for desfavorável",
         "Declaração de hipossuficiência e comprovante de renda",
       ],
       saida:
         "Os requisitos (b) e (f) com status, justificativa e pendência, que entram no placar junto com os quatro avaliados pelo modelo.",
       limites:
-        "A consulta ao painel da CONITEC PROPÕE a situação, não decide: o mesmo princípio ativo aparece várias vezes, com decisões opostas em anos diferentes, e qual delas vale depende da indicação clínica do caso. A mora é contada por data: 180 dias prorrogáveis por 90, do art. 19-R da Lei 8.080/1990. Em análise sem data informada não vira mora por suposição — fica como revisão necessária. Recomendação desfavorável só é ok com demonstração da ilegalidade do ato, que é juízo do advogado.",
+        "A consulta ao painel da CONITEC PROPÕE a situação, não decide: o mesmo princípio ativo aparece várias vezes, com decisões opostas em anos diferentes, e qual delas vale depende da indicação clínica do caso. A mora é contada por data: 180 dias prorrogáveis por 90, do art. 19-R da Lei 8.080/1990. Em análise sem data informada não vira mora por suposição: fica como revisão necessária. Recomendação desfavorável só é ok com demonstração da ilegalidade do ato, que é juízo do advogado.",
     },
     {
       id: "anonimizacao",
@@ -266,7 +266,7 @@ export function catalogoDePontos(): PontoDeIA[] {
       entradas: ["Texto dos quatro documentos do caso", "Vocabulário clínico da CMED, protegido contra remoção"],
       saida: "Texto com marcadores e o placar do que foi substituído, exibido na etapa de achados.",
       limites:
-        "Nenhuma anonimização automática é completa. O produto erra para o lado de remover demais, e o texto anonimizado fica visível no painel de transparência para conferência. Se o serviço estiver fora, nada é processado — falha fechada.",
+        "Nenhuma anonimização automática é completa. O produto erra para o lado de remover demais, e o texto anonimizado fica visível no painel de transparência para conferência. Se o serviço estiver fora, nada é processado: falha fechada.",
     },
   ];
 }

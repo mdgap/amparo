@@ -41,7 +41,7 @@ export function Conferencia({
     setOrigem(a);
     onMudar({
       ...medicamento,
-      nome: `${a.produto} — ${a.apresentacao}`,
+      nome: `${a.produto} (${a.apresentacao})`,
       precoApresentacao: Number(a.pmvg_0 ?? 0),
       precoOrigem: "cmed",
       // Apresentação ambígua (volume, creme, spray) vem sem unidades:
@@ -315,7 +315,7 @@ function BuscaCmed({
       if (!r.achados.length) {
         setErro(
           "Nenhum princípio ativo da lista da CMED foi citado nos documentos. " +
-            "Pode ser medicamento fora da tabela — preencha o preço abaixo como orçamento.",
+            "Pode ser medicamento fora da tabela. Preencha o preço abaixo como orçamento.",
         );
       }
     } catch (e) {
@@ -414,7 +414,7 @@ function BuscaCmed({
             <p className="text-muted">
               Já citados como tentados:{" "}
               {citados.filter((c) => c.papel !== "pedido").map((c) => c.principioAtivo).join(", ")}
-              {" "}— servem ao requisito de impossibilidade de substituição.
+              . Servem ao requisito de impossibilidade de substituição.
             </p>
           )}
           <p className="text-muted">
@@ -430,7 +430,7 @@ function BuscaCmed({
               <IconeRevisao className="mt-0.5 size-4 shrink-0" />
               <span>
                 Não identifiquei nos documentos: {posologiaFaltante.join(", ")}.
-                Esses campos ficaram com o valor que já estava — confira abaixo.
+                Esses campos ficaram com o valor que já estava. Confira abaixo.
               </span>
             </p>
           )}
@@ -544,7 +544,7 @@ function SituacaoProcessual({
         </h2>
       </div>
       <p className="mb-5 text-xs text-muted">
-        Dois requisitos do Tema 6 não estão nos documentos. Informe aqui — eles
+        Dois requisitos do Tema 6 não estão nos documentos. Informe aqui: eles
         são apurados por regra, não pelo modelo.
       </p>
 
@@ -569,7 +569,7 @@ function SituacaoProcessual({
             {registros?.nuncaDemandado && (
               <p className="mt-2 text-xs text-[var(--status-ok-fg)]">
                 Não consta do painel de tecnologias demandadas. Isso indica que
-                nunca houve pedido de incorporação — confira e marque abaixo.
+                nunca houve pedido de incorporação. Confira e marque abaixo.
               </p>
             )}
 
@@ -656,7 +656,7 @@ function SituacaoProcessual({
             />
             {conitec.situacao === "em_analise" && !conitec.desde && (
               <p className="mt-2 text-xs text-[var(--status-atencao-fg)]">
-                Sem a data não é possível apurar a mora — o requisito fica como
+                Sem a data não é possível apurar a mora. O requisito fica como
                 revisão necessária.
               </p>
             )}

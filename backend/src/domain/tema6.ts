@@ -75,7 +75,7 @@ export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
     descricao:
       "Laudo médico específico e minucioso, com cinco elementos: CID; histórico de tratamentos COM DATAS; justificativa da dose; justificativa da duração; assinatura com CRM.",
     regraOk:
-      "ok: os CINCO elementos estão presentes. fraco: falta um ou mais dos cinco — e a saída deve dizer QUAL falta. falta: laudo ausente ou genérico.",
+      "ok: os CINCO elementos estão presentes. fraco: falta um ou mais dos cinco, e a saída deve dizer QUAL falta. falta: laudo ausente ou genérico.",
     fonte:
       "Guia Rápido do CNJ (nov/2025), item 3.1, requisito 5; Tema 106/STJ (REsp 1.657.156)",
     comoComprovar:
@@ -86,7 +86,7 @@ export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
     origem: "formulario",
     titulo: "Incapacidade financeira",
     descricao:
-      "Prova consistente da incapacidade de arcar com o custo do medicamento. O produto exibe a razão entre custo anual e renda como número, sem julgar se a pessoa é hipossuficiente — quem decide é o juízo.",
+      "Prova consistente da incapacidade de arcar com o custo do medicamento. O produto exibe a razão entre custo anual e renda como número, sem julgar se a pessoa é hipossuficiente: quem decide é o juízo.",
     regraOk:
       "ok: declaração de hipossuficiência E comprovante de renda. fraco: apenas a declaração. falta: nenhum dos dois.",
     fonte: "Guia Rápido do CNJ (nov/2025), item 3.1, requisito 6",

@@ -27,7 +27,7 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
   function avancar() {
     if (temCpf(documentos)) {
       setErro(
-        "Há um CPF nos documentos. Remova os dados que identificam a paciente — a ferramenta trabalha sem identificação.",
+        "Há um CPF nos documentos. Remova os dados que identificam a paciente. A ferramenta trabalha sem identificação.",
       );
       return;
     }
@@ -38,7 +38,7 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
   return (
     <>
       <Cabecalho
-        descricao="Envie ou cole o texto de cada peça. Use apenas documentos anonimizados: sem nome, sem CPF, sem número de cartão do SUS."
+        descricao="Envie ou cole o texto de cada peça do caso. Laudo e pedido administrativo são obrigatórios."
         passo="Etapa 1 de 4"
         etapaAtual={1}
         titulo="Documentos do caso"
@@ -56,7 +56,8 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
 
       <p className="mb-5 flex items-center gap-3 rounded-[0.5625rem] border border-[var(--border)] bg-[#eaf1ed] px-4 py-3 text-xs text-[#214832]">
         <IconeEscudo className="size-[1.125rem] shrink-0" />
-        Use documentos anonimizados, sem nome, CPF ou número do cartão do SUS.
+        Os documentos são anonimizados automaticamente: nome, CPF, cartão do SUS
+        e contatos viram marcadores antes de qualquer análise.
       </p>
 
       {/* Os dois obrigatórios ficam lado a lado; os opcionais, abaixo. */}
@@ -151,7 +152,7 @@ function CampoDocumento({
       onMudar(r.texto);
       setAvisoDoArquivo(
         r.origem === "ocr"
-          ? `PDF digitalizado: texto obtido por OCR (${r.paginas} pág., confiança ${r.confianca}%). Confira antes de seguir — OCR erra.`
+          ? `PDF digitalizado: texto obtido por OCR (${r.paginas} pág., confiança ${r.confianca}%). Confira antes de seguir: OCR erra.`
           : `PDF lido: ${r.paginas} página(s).`,
       );
     } catch (e) {

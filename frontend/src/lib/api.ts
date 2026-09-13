@@ -170,7 +170,7 @@ export const PASSOS_DA_ANALISE: { id: PassoId; titulo: string; enquanto: string 
   {
     id: "placar",
     titulo: "Consolidando o placar",
-    enquanto: "Quantos requisitos estão ok, fracos ou faltando — somado em código, não pelo modelo.",
+    enquanto: "Quantos requisitos estão ok, fracos ou faltando: somado em código, não pelo modelo.",
   },
   {
     id: "dossie",
