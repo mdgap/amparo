@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Checkbox, Input, Label, NumberField, Spinner, TextField } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
 import {
@@ -42,6 +42,7 @@ export function Conferencia({
     onMudar({
       ...medicamento,
       nome: `${a.produto} (${a.apresentacao})`,
+      principioAtivo: a.principio_ativo,
       precoApresentacao: Number(a.pmvg_0 ?? 0),
       precoOrigem: "cmed",
       // Apresentação ambígua (volume, creme, spray) vem sem unidades:
@@ -183,6 +184,7 @@ export function Conferencia({
         <SituacaoProcessual
           dados={processuais}
           medicamento={medicamento.nome}
+          principioAtivo={medicamento.principioAtivo}
           onMudar={onMudarProcessuais}
         />
         </div>
@@ -492,42 +494,139 @@ function BuscaCmed({
 function SituacaoProcessual({
   dados,
   medicamento,
+  principioAtivo,
   onMudar,
 }: {
   dados: DadosProcessuais;
   medicamento: string;
+  /** O painel da CONITEC indexa por tecnologia, não por nome comercial. */
+  principioAtivo?: string;
   onMudar: (d: DadosProcessuais) => void;
 }) {
   const { conitec, hipossuficiencia } = dados;
   const [consultando, setConsultando] = useState(false);
   const [registros, setRegistros] = useState<Awaited<ReturnType<typeof api.conitec>> | null>(null);
   const [erroConsulta, setErroConsulta] = useState<string | null>(null);
+  /** Preenchido pela consulta, não pelo advogado. Vira selo, e some se ele mexer. */
+  const [automatico, setAutomatico] = useState<string | null>(null);
+  /** Último termo consultado sozinho, para não repetir a cada render. */
+  const jaConsultado = useRef<string | null>(null);
+  /** Estado mais recente: a consulta responde depois do render que a disparou. */
+  const atual = useRef(dados);
+  atual.current = dados;
+
+  /**
+   * Termo da consulta. O princípio ativo é o que o painel indexa; o nome
+   * comercial só serve de reserva.
+   *
+   * Palavra genérica é descartada: "Medicamento sintético 50 mg" buscava
+   * "Medicamento" e trazia nove registros de "Medicamentos biológicos",
+   * nenhum do caso. Sem termo utilizável, não se consulta — melhor campo
+   * vazio que lista errada.
+   */
+  const GENERICAS = new Set([
+    "medicamento", "medicamentos", "comprimido", "comprimidos", "capsula",
+    "capsulas", "cápsula", "cápsulas", "caixa", "frasco", "ampola", "solucao",
+    "solução", "sintetico", "sintético", "generico", "genérico", "oral",
+    "injetavel", "injetável", "suspensao", "suspensão", "revestido",
+  ]);
+
+  function termoDaBusca(): string {
+    const candidatos = [principioAtivo, medicamento];
+    for (const bruto of candidatos) {
+      const palavra = (bruto ?? "")
+        .split(/[\s—\-,;]+/)
+        .map((p) => p.trim())
+        .find((p) => p.length >= 4 && !GENERICAS.has(p.toLowerCase()) && !/^\d/.test(p));
+      if (palavra) return palavra;
+    }
+    return "";
+  }
 
   /**
    * Consulta o painel da CONITEC e PROPÕE a situação — não decide. O mesmo
    * princípio ativo aparece várias vezes, com decisões opostas em anos
    * diferentes; qual delas vale depende da indicação clínica do caso.
+   *
+   * `automatica` só muda o que acontece com um resultado SEM ambiguidade;
+   * havendo mais de um registro, a escolha continua sendo do advogado.
    */
-  async function consultar() {
-    const termo = medicamento.split(/[\s—-]/).find((p) => p.length >= 4) ?? medicamento;
+  async function consultar(automatica = false) {
+    const termo = termoDaBusca();
+    if (!termo) {
+      setErroConsulta(
+        "Sem princípio ativo para consultar. Informe a situação abaixo.",
+      );
+      return;
+    }
     setConsultando(true);
     setErroConsulta(null);
     try {
-      setRegistros(await api.conitec(termo.trim()));
+      const r = await api.conitec(termo);
+      setRegistros(r);
+      if (automatica) preencherSeNaoHouverDuvida(r);
     } catch (e) {
-      setErroConsulta(e instanceof Error ? e.message : "Falha na consulta.");
+      // Falha aqui nunca trava a etapa: o campo abaixo continua editável, e
+      // sem ele a demonstração seguiria emperrada por um painel fora do ar.
+      setErroConsulta(
+        automatica
+          ? "Não consegui consultar o painel da CONITEC agora. Informe a situação abaixo."
+          : e instanceof Error
+            ? e.message
+            : "Falha na consulta.",
+      );
     } finally {
       setConsultando(false);
     }
   }
 
+  /**
+   * Preenche só quando o painel não deixa dúvida: nenhum registro (nunca houve
+   * pedido de incorporação) ou um único registro com situação reconhecida.
+   * Com vários, a tela lista e quem escolhe é o advogado.
+   */
+  function preencherSeNaoHouverDuvida(r: NonNullable<typeof registros>) {
+    if (r.nuncaDemandado) {
+      onMudar({
+        ...atual.current,
+        conitec: { ...atual.current.conitec, situacao: "nunca_avaliado", desde: "" },
+      });
+      setAutomatico("Não consta do painel: nunca houve pedido de incorporação.");
+      return;
+    }
+    const unico = r.registros.length === 1 ? r.registros[0] : undefined;
+    if (unico && unico.situacaoSugerida !== "nao_informado") {
+      aplicar(unico);
+      setAutomatico(`Registro único no painel de ${r.painelVersao}: ${unico.status}`);
+    }
+  }
+
+  /**
+   * Consulta ao chegar na etapa, enquanto o campo estiver intocado. Não
+   * sobrescreve escolha do advogado e não bloqueia nada: se falhar, o campo
+   * abaixo segue valendo.
+   */
+  useEffect(() => {
+    const termo = termoDaBusca();
+    if (!termo) return;
+    if (conitec.situacao !== "nao_informado") return;
+    if (jaConsultado.current === termo) return;
+    jaConsultado.current = termo;
+    void consultar(true);
+    // Só o medicamento redispara: mudar a situação à mão não deve reconsultar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [medicamento, principioAtivo]);
+
   function aplicar(r: NonNullable<typeof registros>["registros"][number]) {
     const data = r.situacaoSugerida === "desfavoravel" ? r.data_decisao : r.data_protocolo;
     onMudar({
-      ...dados,
+      ...atual.current,
       conitec: {
-        ...conitec,
-        situacao: r.situacaoSugerida === "nao_informado" ? conitec.situacao : r.situacaoSugerida,
+        ...atual.current.conitec,
+        situacao:
+          r.situacaoSugerida === "nao_informado"
+            ? atual.current.conitec.situacao
+            : r.situacaoSugerida,
         desde: data ? data.slice(0, 10) : "",
       },
     });
@@ -549,18 +648,27 @@ function SituacaoProcessual({
       </p>
 
       <div className="flex flex-col gap-5">
-        {medicamento.trim().length >= 4 && (
+        {medicamento.trim() !== "" && (
           <div className="rounded-[0.5625rem] border border-[var(--border)] bg-[var(--surface-secondary)] p-3">
-            <Button
-              className="controle w-full"
-              isPending={consultando}
-              size="sm"
-              variant="secondary"
-              onPress={() => void consultar()}
-            >
-              {consultando ? <Spinner size="sm" /> : null}
-              Consultar no painel da CONITEC
-            </Button>
+            {termoDaBusca() === "" ? (
+              <p className="text-xs leading-relaxed text-muted">
+                Sem princípio ativo para consultar o painel: o nome informado
+                não traz um termo pesquisável. Escolha a apresentação na busca
+                da CMED acima, ou informe a situação abaixo — a consulta não é
+                obrigatória para seguir.
+              </p>
+            ) : (
+              <Button
+                className="controle w-full"
+                isPending={consultando}
+                size="sm"
+                variant="secondary"
+                onPress={() => void consultar()}
+              >
+                {consultando ? <Spinner size="sm" /> : null}
+                {registros ? "Consultar de novo" : "Consultar no painel da CONITEC"}
+              </Button>
+            )}
 
             {erroConsulta && (
               <p className="mt-2 text-xs text-[var(--status-erro-fg)]">{erroConsulta}</p>
@@ -613,15 +721,17 @@ function SituacaoProcessual({
             className="controle w-full rounded-[0.5625rem] border border-[#bfcfc5] bg-white px-3 text-sm"
             id="conitec-situacao"
             value={conitec.situacao}
-            onChange={(e) =>
+            onChange={(e) => {
+              // Escolha à mão substitui a sugestão: o selo sai junto.
+              setAutomatico(null);
               onMudar({
                 ...dados,
                 conitec: {
                   ...conitec,
                   situacao: e.target.value as DadosProcessuais["conitec"]["situacao"],
                 },
-              })
-            }
+              });
+            }}
           >
             {SITUACOES_CONITEC.map((s) => (
               <option key={s.valor} value={s.valor}>
@@ -629,6 +739,15 @@ function SituacaoProcessual({
               </option>
             ))}
           </select>
+          {automatico && (
+            <p className="mt-2 flex items-start gap-1.5 rounded-[0.375rem] border border-[#c8e5d2] bg-[var(--status-ok-bg)] px-2.5 py-2 text-xs text-[var(--status-ok-fg)]">
+              <IconeOk className="mt-0.5 size-[0.875rem] shrink-0" />
+              <span>
+                Preenchido pela consulta ao painel — {automatico} Confira antes
+                de seguir; mudar o campo acima substitui a sugestão.
+              </span>
+            </p>
+          )}
           <p className="helper mt-2 text-xs leading-relaxed text-muted">
             Consulte em gov.br/conitec. Nunca avaliado já satisfaz o requisito;
             em análise depende do prazo de 180 dias, prorrogável por 90.

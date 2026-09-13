@@ -14,7 +14,8 @@ import {
 } from "./lib/api.ts";
 import { historicoApi } from "./lib/historico.ts";
 import {
-  CASO_EXEMPLO, DOCUMENTOS_VAZIOS, MEDICAMENTO_VAZIO, PROCESSUAIS_VAZIOS,
+  CASO_EXEMPLO, DOCUMENTOS_VAZIOS, MEDICAMENTO_VAZIO, PROCESSUAIS_EXEMPLO,
+  PROCESSUAIS_VAZIOS,
   type DadosMedicamento, type DadosProcessuais, type Documentos as Docs,
 } from "./lib/caso.ts";
 
@@ -179,6 +180,9 @@ export function App() {
           onExemplo={() => {
             setDocumentos(CASO_EXEMPLO.documentos);
             setMedicamento(CASO_EXEMPLO.medicamento);
+            // O caso sintético traz a situação processual preenchida: os dois
+            // requisitos de formulário não têm documento de onde sair.
+            setProcessuais(PROCESSUAIS_EXEMPLO);
           }}
           onMudar={setDocumentos}
         />

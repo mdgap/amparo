@@ -7,6 +7,8 @@ export interface Documentos {
 
 export interface DadosMedicamento {
   nome: string;
+  /** Da apresentação escolhida na CMED. É por ele que a CONITEC indexa. */
+  principioAtivo?: string;
   precoApresentacao: number;
   /** "orcamento" quando a apresentação não consta da CMED. */
   precoOrigem: "cmed" | "orcamento";
@@ -89,6 +91,21 @@ export const CAMPOS_DOCUMENTO = [
 ];
 
 /** Caso sintético para demonstração — nenhum dado real de paciente. */
+/**
+ * Situação processual do caso sintético.
+ *
+ * O caso da demonstração é um medicamento fictício: ele nunca foi submetido à
+ * CONITEC, e é isso que "nunca avaliado" diz. Sem estes valores a demonstração
+ * abria com dois dos seis requisitos em erro por campo em branco, e não por
+ * uma conclusão da análise — que é o oposto do que a tela precisa mostrar.
+ *
+ * Vale só para o caso sintético. Caso real começa em PROCESSUAIS_VAZIOS.
+ */
+export const PROCESSUAIS_EXEMPLO: DadosProcessuais = {
+  conitec: { situacao: "nunca_avaliado", desde: "", ilegalidadeDemonstrada: false },
+  hipossuficiencia: { declaracao: true, comprovanteRenda: true },
+};
+
 export const CASO_EXEMPLO: { documentos: Documentos; medicamento: DadosMedicamento } = {
   documentos: {
     laudo:
