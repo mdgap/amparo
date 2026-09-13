@@ -215,6 +215,7 @@ export function App() {
         <DossieEtapa
           aptoParaProtocolo={analise.tema6?.resumo.aptoParaProtocolo ?? false}
           dossie={analise.dossie}
+          fontes={analise.tema6?.fontes ?? []}
           onVoltar={() => setEtapa("achados")}
         />
       )}

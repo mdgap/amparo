@@ -3,7 +3,8 @@ import { Alert, Button } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
 import { IconeDossie, IconeOk } from "../components/Icones.tsx";
 import { AjudaIA } from "../components/AjudaIA.tsx";
-import type { Dossie } from "../lib/api.ts";
+import { Fontes } from "../components/Fontes.tsx";
+import type { Dossie, Fonte } from "../lib/api.ts";
 
 const PECAS = [
   { id: "memorandoDeRota", titulo: "Memorando de rota" },
@@ -34,10 +35,13 @@ const DESTAQUE_POR_PECA: Record<PecaId | "pendencias", string> = {
 export function DossieEtapa({
   dossie,
   aptoParaProtocolo,
+  fontes,
   onVoltar,
 }: {
   dossie: Dossie;
   aptoParaProtocolo: boolean;
+  /** As mesmas da análise: é aqui que os [F1], [F2] das minutas aparecem. */
+  fontes: Fonte[];
   onVoltar: () => void;
 }) {
   const [peca, setPeca] = useState<PecaId>("memorandoDeRota");
@@ -158,6 +162,10 @@ export function DossieEtapa({
           </ol>
         )}
       </section>
+
+      {/* As minutas acima citam [F1], [F2]. A legenda tem de estar na mesma
+          tela, ou o marcador fica sem como ser resolvido por quem lê a peça. */}
+      {fontes.length > 0 && <Fontes fontes={fontes} />}
 
       <div className="mt-8 flex flex-wrap gap-3 border-t border-[var(--border)] pt-6">
         <Button className="controle" variant="secondary" onPress={onVoltar}>
