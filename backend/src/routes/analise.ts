@@ -7,7 +7,7 @@ import { analisarTema6 } from "../llm/analisarTema6.ts";
 import { redigirDossie } from "../llm/redigirDossie.ts";
 import { PROMPT_VERSAO } from "../llm/prompts/sistema.ts";
 import { query } from "../db.ts";
-import { temLLM } from "../env.ts";
+import { env, temLLM } from "../env.ts";
 import { anonimizarVarios } from "../documentos/anonimizar.ts";
 
 const medicamentoSchema = z.object({
@@ -107,7 +107,7 @@ export async function rotasDeAnalise(app: FastifyInstance) {
     });
 
     aviso({ id: "tema6", estado: "fazendo" });
-    const { avaliacoes, alertaENatJus, fontes } = await analisarTema6({
+    const { avaliacoes, alertaENatJus, fontes, prompt: promptTema6 } = await analisarTema6({
       ...anonimizados,
       medicamento: medicamento.nome,
     });
@@ -133,6 +133,34 @@ export async function rotasDeAnalise(app: FastifyInstance) {
 
     const tema6 = { avaliacoes, resumo, alertaENatJus, fontes };
 
+    /**
+     * Transparência para auditoria: o que foi enviado ao modelo, literalmente.
+     *
+     * Um prompt real prova três coisas que nenhuma afirmação prova: que o texto
+     * chegou anonimizado, que os números foram entregues prontos com instrução
+     * de não recalcular, e que as fontes citadas vieram do corpus. Por isso é o
+     * prompt renderizado do caso, não o modelo dele.
+     */
+    const prompts = {
+      modelo: env.OPENROUTER_MODEL,
+      promptVersao: PROMPT_VERSAO,
+      temperatura: 0,
+      zeroDataRetention: true,
+      etapas: [
+        {
+          id: "tema6",
+          titulo: "Classificação dos seis requisitos do Tema 6",
+          ...promptTema6,
+        },
+        {
+          id: "dossie",
+          titulo: "Redação das cinco peças do dossiê",
+          sistema: dossie.prompt?.sistema ?? "",
+          usuario: dossie.prompt?.usuario ?? "",
+        },
+      ],
+    };
+
     await query(
       `INSERT INTO analise (parametros_versao, entrada, rota, tema6, dossie)
        VALUES ($1,$2,$3,$4,$5)`,
@@ -141,7 +169,7 @@ export async function rotasDeAnalise(app: FastifyInstance) {
         JSON.stringify({ medicamento, posologia }),
         JSON.stringify(rota),
         JSON.stringify(tema6),
-        JSON.stringify(dossie),
+        JSON.stringify({ ...dossie, prompt: undefined }),
       ],
     ).catch((e) => app.log.warn({ e }, "análise não persistida"));
 
@@ -150,6 +178,7 @@ export async function rotasDeAnalise(app: FastifyInstance) {
       tema6,
       dossie,
       anonimizacao: { removidos: limpos.removidos, total: limpos.total },
+      prompts,
       parametrosVersao: PARAMETROS.versao,
     };
   }

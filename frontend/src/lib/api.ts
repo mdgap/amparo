@@ -60,6 +60,15 @@ export interface Anonimizacao {
   total: number;
 }
 
+/** O que foi enviado ao modelo, para auditoria. */
+export interface Prompts {
+  modelo: string;
+  promptVersao: string;
+  temperatura: number;
+  zeroDataRetention: boolean;
+  etapas: { id: string; titulo: string; sistema: string; usuario: string }[];
+}
+
 export interface Analise {
   rota: ResultadoRota;
   tema6: {
@@ -75,6 +84,7 @@ export interface Analise {
   dossie: Dossie | null;
   /** Placar da anonimização feita antes de o texto ir ao modelo. */
   anonimizacao?: Anonimizacao;
+  prompts?: Prompts;
   aviso?: string;
   parametrosVersao: string;
 }

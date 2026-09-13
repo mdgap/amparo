@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Alert, Button } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
 import { Estado } from "../components/Estado.tsx";
+import { Prompts } from "../components/Prompts.tsx";
 import { IconeBalanca, IconeChevron, IconeDocumento, IconeOk, IconeSeta } from "../components/Icones.tsx";
 import { brl, type Analise, type RequisitoTema6, type StatusRequisito } from "../lib/api.ts";
 import { CAMPOS_DOCUMENTO, type Documentos } from "../lib/caso.ts";
@@ -150,6 +151,8 @@ export function Achados({ analise, catalogo, documentos, onVoltar, onVerDossie }
           </div>
         </section>
       </div>
+
+      {analise.prompts && <Prompts prompts={analise.prompts} />}
 
       <div className="mt-8 flex flex-wrap gap-3 border-t border-[var(--border)] pt-6">
         <Button className="controle" isDisabled={!analise.dossie} onPress={onVerDossie}>

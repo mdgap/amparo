@@ -40,6 +40,8 @@ export async function analisarTema6(entrada: EntradaTema6): Promise<{
   avaliacoes: AvaliacaoRequisito[];
   alertaENatJus?: string;
   fontes: Awaited<ReturnType<typeof buscarCorpus>>;
+  /** O prompt exatamente como foi enviado — para auditoria. */
+  prompt: { sistema: string; usuario: string };
 }> {
   const fontes = await buscarCorpus(
     `requisitos do Tema 6 do STF para medicamento não incorporado ${entrada.medicamento}`,
@@ -78,5 +80,6 @@ Responda SOMENTE com JSON: {"avaliacoes":[{"id","status","justificativa","eviden
     avaliacoes: saida.avaliacoes.filter((a) => validos.has(a.id)),
     alertaENatJus: saida.alertaENatJus,
     fontes,
+    prompt: { sistema: SISTEMA, usuario: prompt },
   };
 }

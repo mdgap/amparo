@@ -14,7 +14,10 @@ const schema = z.object({
   trechoDePeticao: z.string(),
 });
 
-export type Dossie = z.infer<typeof schema>;
+export type Dossie = z.infer<typeof schema> & {
+  /** O prompt exatamente como foi enviado — para auditoria. */
+  prompt?: { sistema: string; usuario: string };
+};
 
 /**
  * Redige as cinco peças do dossiê. Os números (custo, SM, foro) entram no
@@ -58,6 +61,7 @@ ${resumo.aptoParaProtocolo ? "" : 'IMPORTANTE: nem todos os requisitos estão cu
 Responda SOMENTE com JSON: {"memorandoDeRota","requerimentoAdministrativo","resumoDeEvidencia","pendenciasDoCliente":[],"trechoDePeticao"}`;
 
   const dossie = await pedirJSON({ system: SISTEMA, prompt, schema, maxTokens: 8192 });
+  const registro = { sistema: SISTEMA, usuario: prompt };
 
   // A instrução no prompt reduz o Markdown; a limpeza aqui é o que garante.
   return {
@@ -67,5 +71,6 @@ Responda SOMENTE com JSON: {"memorandoDeRota","requerimentoAdministrativo","resu
     resumoDeEvidencia: semMarkdown(dossie.resumoDeEvidencia),
     trechoDePeticao: semMarkdown(dossie.trechoDePeticao),
     pendenciasDoCliente: dossie.pendenciasDoCliente.map(semMarkdown),
+    prompt: registro,
   };
 }
