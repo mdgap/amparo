@@ -1,7 +1,10 @@
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Alert, Button, TextArea } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
-import { IconeOk, IconeSeta, IconeUpload } from "../components/Icones.tsx";
+import {
+  IconeDocumento, IconeEscudo, IconeOk, IconeSeta, IconeUpload,
+} from "../components/Icones.tsx";
+import { BuscaNatJus } from "../components/BuscaNatJus.tsx";
 import { api } from "../lib/api.ts";
 import {
   CAMPOS_DOCUMENTO, CASO_EXEMPLO, temCpf, type Documentos as Docs,
@@ -37,11 +40,12 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
       <Cabecalho
         descricao="Envie ou cole o texto de cada peça. Use apenas documentos anonimizados: sem nome, sem CPF, sem número de cartão do SUS."
         passo="Etapa 1 de 4"
+        etapaAtual={1}
         titulo="Documentos do caso"
       />
 
       {erro && (
-        <Alert className="mb-6" status="danger">
+        <Alert className="mb-5" status="danger">
           <Alert.Indicator />
           <Alert.Content>
             <Alert.Title>Dado pessoal encontrado</Alert.Title>
@@ -50,12 +54,18 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
         </Alert>
       )}
 
-      <div className="flex flex-col gap-4">
-        {CAMPOS_DOCUMENTO.map((campo) => (
+      <p className="mb-5 flex items-center gap-3 rounded-[0.5625rem] border border-[var(--border)] bg-[#eaf1ed] px-4 py-3 text-xs text-[#214832]">
+        <IconeEscudo className="size-[1.125rem] shrink-0" />
+        Use documentos anonimizados, sem nome, CPF ou número do cartão do SUS.
+      </p>
+
+      {/* Os dois obrigatórios ficam lado a lado; os opcionais, abaixo. */}
+      <div className="grid gap-[1.125rem] lg:grid-cols-2">
+        {CAMPOS_DOCUMENTO.filter((c) => c.obrigatorio).map((campo) => (
           <CampoDocumento
             key={campo.id}
             ajuda={campo.ajuda}
-            obrigatorio={campo.obrigatorio}
+            obrigatorio
             rotulo={campo.rotulo}
             valor={documentos[campo.id]}
             onMudar={(v) => onMudar({ ...documentos, [campo.id]: v })}
@@ -63,37 +73,61 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
         ))}
       </div>
 
-      <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-[var(--border)] pt-6">
-        <Button className="controle" isDisabled={completos === 0} onPress={avancar}>
-          Conferir informações
-          <IconeSeta className="size-5" />
-        </Button>
-        <Button className="controle" variant="secondary" onPress={onExemplo}>
-          Carregar caso sintético
-        </Button>
-        <p className="text-sm text-muted">
-          {completos} de {obrigatorios} documentos obrigatórios preenchidos
+      <div className="mt-[1.125rem] grid gap-[1.125rem] lg:grid-cols-2">
+        {CAMPOS_DOCUMENTO.filter((c) => !c.obrigatorio).map((campo) => (
+          <CampoDocumento
+            key={campo.id}
+            ajuda={campo.ajuda}
+            buscaNatJus={campo.id === "notaENatJus"}
+            obrigatorio={false}
+            rotulo={campo.rotulo}
+            valor={documentos[campo.id]}
+            onMudar={(v) => onMudar({ ...documentos, [campo.id]: v })}
+          />
+        ))}
+      </div>
+
+      <div className="barra-acao mt-6 flex flex-wrap items-center justify-between gap-4 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button className="controle" isDisabled={completos === 0} onPress={avancar}>
+            Conferir informações
+            <IconeSeta className="size-[1.0625rem]" />
+          </Button>
+          <Button className="controle" variant="secondary" onPress={onExemplo}>
+            Carregar caso sintético
+          </Button>
+        </div>
+        <p className="flex items-center gap-2 text-xs text-[#3f5648]">
+          <IconeOk className="size-4 text-[#177948]" />
+          <span>
+            <strong className="font-medium text-foreground">{completos}</strong> de{" "}
+            {obrigatorios} documentos obrigatórios preenchidos
+          </span>
         </p>
       </div>
 
-      <p className="mt-4 text-sm text-muted">
+      <p className="mt-5 max-w-[59rem] text-[0.625rem] leading-relaxed text-muted">
         O texto dos documentos é usado apenas durante a análise e não é
-        armazenado. O caso sintético serve para demonstração.
+        armazenado. Nome, CPF, cartão do SUS e contato são substituídos por
+        marcador antes de qualquer envio ao modelo. O caso sintético serve para
+        demonstração.
       </p>
     </>
   );
 }
 
 function CampoDocumento({
-  rotulo, ajuda, obrigatorio, valor, onMudar,
+  rotulo, ajuda, obrigatorio, valor, buscaNatJus = false, onMudar,
 }: {
   rotulo: string;
   ajuda: string;
   obrigatorio: boolean;
   valor: string;
+  buscaNatJus?: boolean;
   onMudar: (v: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const campoId = useId();
   const [arrastando, setArrastando] = useState(false);
   const preenchido = valor.trim().length > 0;
 
@@ -128,24 +162,33 @@ function CampoDocumento({
   }
 
   return (
-    <section className="rounded-2xl border border-[var(--border)] bg-surface p-6">
-      <div className="mb-1 flex flex-wrap items-center gap-2">
-        <h2 className="fonte-display text-lg font-semibold">{rotulo}</h2>
-        {obrigatorio && !preenchido && (
-          <span className="text-sm text-muted">obrigatório</span>
-        )}
-        {preenchido && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--status-ok-bg)] px-2.5 py-0.5 text-sm font-medium text-[var(--status-ok-fg)]">
-            <IconeOk className="size-4" />
-            {valor.trim().length} caracteres
+    <section className="cartao p-[1.375rem]">
+      <div className="mb-2 flex items-center justify-between gap-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="icone-secao">
+            <IconeDocumento className="size-5" />
           </span>
-        )}
+          <h2 className="fonte-display truncate text-[1.125rem] font-bold tracking-[-0.022rem]">
+            {rotulo}
+          </h2>
+        </div>
+        <span
+          className={`whitespace-nowrap rounded-[0.3125rem] px-[0.4375rem] py-1 text-[0.625rem] ${
+            obrigatorio
+              ? "bg-[var(--foreground)] text-white"
+              : "bg-[#f0f2f1] text-[#59665e]"
+          }`}
+        >
+          {obrigatorio ? "Obrigatório" : "Opcional"}
+        </span>
       </div>
-      <p className="mb-4 text-sm text-muted">{ajuda}</p>
+      <p className="mb-4 min-h-[1.1875rem] text-xs text-muted">{ajuda}</p>
+
+      {buscaNatJus && <BuscaNatJus onImportar={onMudar} />}
 
       <div
-        className={`mb-3 flex items-center justify-center gap-3 rounded-xl border border-dashed px-4 py-4 text-sm transition-colors
-          ${arrastando ? "border-[var(--color-marca)] bg-[var(--status-ok-bg)]" : "border-[var(--border)] bg-[var(--surface-secondary)]"}`}
+        className={`flex items-center gap-2.5 rounded-[0.5625rem] border border-dashed px-3 py-3 transition-colors
+          ${arrastando ? "border-[var(--color-marca)] bg-[var(--status-ok-bg)]" : "border-[#9db5a8] bg-[#f7faf8]"}`}
         onDragLeave={() => setArrastando(false)}
         onDragOver={(e) => {
           e.preventDefault();
@@ -157,17 +200,22 @@ function CampoDocumento({
           void lerArquivo(e.dataTransfer.files[0]);
         }}
       >
-        <IconeUpload className="size-5 text-muted" />
-        <span className="text-muted">
-          {lendo ? "Lendo o documento…" : "Arraste um PDF ou .txt, ou"}
-        </span>
+        <IconeUpload className="size-5 shrink-0 text-[#347552]" />
+        <div className="min-w-0 flex-1">
+          <span className="block text-xs text-[#224732]">
+            {lendo ? "Lendo o documento…" : "Arraste um PDF ou .txt"}
+          </span>
+          <small className="block text-[0.625rem] text-muted">
+            ou selecione no seu computador
+          </small>
+        </div>
         <Button
           isDisabled={lendo}
           size="sm"
           variant="secondary"
           onPress={() => inputRef.current?.click()}
         >
-          escolher arquivo
+          Escolher arquivo
         </Button>
         <input
           ref={inputRef}
@@ -179,16 +227,32 @@ function CampoDocumento({
       </div>
 
       {avisoDoArquivo && (
-        <p className="mb-3 text-sm text-muted">{avisoDoArquivo}</p>
+        <p className="mt-3 text-xs text-muted">{avisoDoArquivo}</p>
       )}
 
+      <div className="mb-[0.4375rem] mt-3.5 flex items-center justify-between gap-2">
+        <label className="text-[0.6875rem] text-[#465a4e]" htmlFor={campoId}>
+          Texto do documento
+        </label>
+        <span className="num text-[0.625rem] text-[#5d6c63]">
+          {valor.trim().length} caracteres
+        </span>
+      </div>
+
       <TextArea
-        aria-label={rotulo}
-        className="h-32 w-full"
+        className="h-[7.5rem] w-full"
+        id={campoId}
         placeholder="Ou cole o texto aqui"
         value={valor}
         onChange={(e) => onMudar(e.target.value)}
       />
+
+      {preenchido && (
+        <p className="mt-2 flex items-center gap-1.5 text-[0.625rem] text-[#466451]">
+          <IconeOk className="size-[0.8125rem]" />
+          Texto carregado
+        </p>
+      )}
     </section>
   );
 }

@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Button, Checkbox, Input, Label, NumberField, Spinner, TextField } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
-import { IconeOk, IconeRevisao, IconeSeta } from "../components/Icones.tsx";
+import {
+  IconeAchados, IconeConferencia, IconeOk, IconeRemedio, IconeRevisao, IconeSeta,
+} from "../components/Icones.tsx";
+import { AjudaIA } from "../components/AjudaIA.tsx";
 import { api, brl, type ApresentacaoCmed } from "../lib/api.ts";
 import type { DadosMedicamento, Documentos } from "../lib/caso.ts";
 
@@ -46,10 +49,12 @@ export function Conferencia({
       <Cabecalho
         descricao="Estes números definem a competência e o polo passivo. Confira a apresentação na tabela CMED antes de seguir."
         passo="Etapa 2 de 4"
+        etapaAtual={2}
         titulo="Conferência das informações"
       />
 
-      <div className="flex flex-col gap-6">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_18.75rem]">
+        <div className="flex min-w-0 flex-col gap-5">
         <BuscaCmed
           laudo={documentos.laudo}
           receita={documentos.receita}
@@ -64,8 +69,13 @@ export function Conferencia({
           }
         />
 
-        <section className="rounded-2xl border border-[var(--border)] bg-surface p-6">
-          <h2 className="fonte-display mb-5 text-lg font-semibold">Medicamento</h2>
+        <section className="cartao p-[1.375rem]">
+          <div className="mb-5 flex items-center gap-2.5">
+            <span className="icone-secao">
+              <IconeConferencia className="size-5" />
+            </span>
+            <h2 className="fonte-display text-[1.125rem] font-bold">Medicamento</h2>
+          </div>
           {origem && (
             <p className="mb-5 inline-flex flex-wrap items-center gap-2 rounded-full bg-[var(--status-ok-bg)] px-3 py-1 text-sm font-medium text-[var(--status-ok-fg)]">
               <IconeOk className="size-4 shrink-0" />
@@ -163,8 +173,18 @@ export function Conferencia({
           </div>
         </section>
 
-        <section className="rounded-2xl border border-[var(--border)] bg-surface p-6">
-          <h2 className="fonte-display mb-5 text-lg font-semibold">Posologia</h2>
+        </div>
+
+        <section className="cartao p-[1.375rem]">
+          <div className="mb-2 flex items-center gap-2.5">
+            <span className="icone-secao">
+              <IconeRemedio className="size-5" />
+            </span>
+            <h2 className="fonte-display text-[1.125rem] font-bold">Posologia</h2>
+          </div>
+          <p className="mb-5 text-xs text-muted">
+            Multiplica o preço da apresentação e define o custo anual.
+          </p>
           <div className="grid gap-5 sm:grid-cols-3">
             <NumberField
               minValue={0.25}
@@ -210,7 +230,7 @@ export function Conferencia({
         </section>
       </div>
 
-      <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-[var(--border)] pt-6">
+      <div className="barra-acao mt-6 flex flex-wrap items-center gap-3 px-4 py-3">
         <Button
           className="controle"
           isDisabled={!completo}
@@ -311,10 +331,15 @@ function BuscaCmed({
   }
 
   return (
-    <section className="rounded-2xl border border-[var(--border)] bg-surface p-6">
-      <h2 className="fonte-display mb-1 text-lg font-semibold">
-        Buscar na tabela CMED
-      </h2>
+    <section className="cartao p-[1.375rem]">
+      <div className="mb-1 flex items-center gap-2.5">
+        <span className="icone-secao">
+          <IconeAchados className="size-5" />
+        </span>
+        <h2 className="fonte-display text-[1.125rem] font-bold">
+          Buscar na tabela CMED
+        </h2>
+      </div>
       <p className="mb-5 text-sm text-muted">
         Pelo princípio ativo ou pelo nome comercial. O preço vem da coluna
         PMVG 0%, que é a que o Tema 1234 manda usar para valor da causa e
@@ -353,6 +378,15 @@ function BuscaCmed({
           </Button>
         )}
       </div>
+
+      {temDocumentos && (
+        <div className="mt-4">
+          <AjudaIA
+            ponto="reconhecimento"
+            rotulo="Como o medicamento e a posologia são lidos dos documentos"
+          />
+        </div>
+      )}
 
       {citados && citados.length > 0 && (
         <div className="mt-4 flex flex-col gap-1 text-sm">

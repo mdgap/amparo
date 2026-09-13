@@ -36,22 +36,21 @@ export interface EntradaTema6 {
  * documentos do caso, cruzando com a nota do e-NatJus quando existir.
  * O placar final é calculado por `resumirTema6`, não pelo modelo.
  */
-export async function analisarTema6(entrada: EntradaTema6): Promise<{
-  avaliacoes: AvaliacaoRequisito[];
-  alertaENatJus?: string;
-  fontes: Awaited<ReturnType<typeof buscarCorpus>>;
-}> {
-  const fontes = await buscarCorpus(
-    `requisitos do Tema 6 do STF para medicamento não incorporado ${entrada.medicamento}`,
-  );
-
+/**
+ * Monta a mensagem enviada ao modelo.
+ *
+ * Extraída para que a ajuda contextual da interface mostre O MESMO template,
+ * chamado com placeholders no lugar dos documentos. Assim não há como o texto
+ * exibido ao auditor divergir do que é realmente enviado.
+ */
+export function montarPromptTema6(entrada: EntradaTema6, contexto: string): string {
   const requisitos = REQUISITOS_TEMA_6.map(
     (r) =>
       `- ${r.id}: ${r.titulo}\n  ${r.descricao}\n  REGRA DE CLASSIFICAÇÃO: ${r.regraOk}`,
   ).join("\n");
 
   const prompt = `CONTEXTO NORMATIVO (cite como [F1], [F2]...):
-${montarContexto(fontes) || "(corpus vazio — responda 'sem fonte no corpus')"}
+${contexto}
 
 REQUISITOS A AVALIAR:
 ${requisitos}
@@ -71,6 +70,22 @@ TAREFA:
 
 Responda SOMENTE com JSON: {"avaliacoes":[{"id","status","justificativa","evidencias","pendencia"}],"alertaENatJus"}`;
 
+  return prompt;
+}
+
+export async function analisarTema6(entrada: EntradaTema6): Promise<{
+  avaliacoes: AvaliacaoRequisito[];
+  alertaENatJus?: string;
+  fontes: Awaited<ReturnType<typeof buscarCorpus>>;
+  /** O prompt exatamente como foi enviado — para auditoria. */
+  prompt: { sistema: string; usuario: string };
+}> {
+  const fontes = await buscarCorpus(
+    `requisitos do Tema 6 do STF para medicamento não incorporado ${entrada.medicamento}`,
+  );
+
+  const prompt = montarPromptTema6(entrada, montarContexto(fontes) || "(corpus vazio — responda 'sem fonte no corpus')");
+
   const saida = await pedirJSON({ system: SISTEMA, prompt, schema });
 
   const validos = new Set(REQUISITOS_TEMA_6.map((r) => r.id));
@@ -78,5 +93,6 @@ Responda SOMENTE com JSON: {"avaliacoes":[{"id","status","justificativa","eviden
     avaliacoes: saida.avaliacoes.filter((a) => validos.has(a.id)),
     alertaENatJus: saida.alertaENatJus,
     fontes,
+    prompt: { sistema: SISTEMA, usuario: prompt },
   };
 }

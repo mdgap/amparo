@@ -9,6 +9,8 @@ const schema = z.object({
   PORT: z.coerce.number().default(3333),
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
 
+  /** Serviço de anonimização, na própria infraestrutura. */
+  ANONIMIZADOR_URL: z.string().default("http://anonimizador:8000"),
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_BASE_URL: z.string().default("https://openrouter.ai/api/v1"),
   /** Modelo de redação e classificação. Nunca calcula número. */

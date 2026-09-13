@@ -43,6 +43,9 @@ const bancoForaDoAr = {
   },
 };
 
+/** Não anonimiza nada: prova que a proteção de erro não depende da anonimização. */
+const anonimizadorInerte: Dependencias["anonimizar"] = async (textos) => ({ textos, removidos: {}, total: 0 });
+
 const semIA: Dependencias["ia"] = {
   temLLM: false,
   analisarTema6: async () => {
@@ -63,8 +66,17 @@ const comIA: Dependencias["ia"] = {
       evidencias: [LAUDO],
     })),
     fontes: [],
+    prompt: { sistema: "sistema", usuario: `prompt com ${LAUDO}` },
   }),
-  redigirDossie: async () => ({ memorando: "minuta" }) as never,
+  redigirDossie: async () => ({ memorando: "minuta", prompt: { sistema: "sistema", usuario: LAUDO } }) as never,
+};
+
+const falhaComEco: Dependencias["ia"] = {
+  ...comIA,
+  analisarTema6: async (entrada) => {
+    // Provedor que ecoa o prompt na mensagem de erro.
+    throw new Error(`provedor recusou o prompt: ${entrada.laudo}`);
+  },
 };
 
 async function montar(deps: Partial<Dependencias> = {}) {
@@ -72,6 +84,7 @@ async function montar(deps: Partial<Dependencias> = {}) {
   const app = await construirApp({
     repositorio: repositorioFake(),
     ia: semIA,
+    anonimizar: anonimizadorInerte,
     logStream: { write: (linha: string) => void logs.push(linha) },
     ...deps,
   });
@@ -113,10 +126,33 @@ test("com IA, a avaliação é gravada sem as evidências literais do laudo", as
   assert.equal(r.statusCode, 200);
   assert.equal(repositorio.gravados.length, 1);
   assert.equal(repositorio.gravados[0]!.tema6?.resumo.aptoParaProtocolo, true);
-  // O dossiê é guardado para a análise poder ser reaberta pelo histórico.
+  // O dossiê é guardado para a análise poder ser reaberta — sem o prompt.
   assert.deepEqual(repositorio.gravados[0]!.dossie, { memorando: "minuta" });
-  assert.ok(!JSON.stringify(repositorio.gravados[0]!.tema6).includes("MARCADOR"));
-  assert.ok(!JSON.stringify(repositorio.gravados[0]!.entrada).includes("MARCADOR"));
+  assert.ok(!JSON.stringify(repositorio.gravados[0]).includes("MARCADOR"));
+  await app.close();
+});
+
+test("a IA recebe o texto já anonimizado", async () => {
+  let recebido = "";
+  const anonimizar: Dependencias["anonimizar"] = async (textos) => ({
+    textos: textos.map((t) => t.replace("Maria Aparecida da Silva", "[NOME]")),
+    removidos: { "[NOME]": 1 },
+    total: 1,
+  });
+  const ia: Dependencias["ia"] = {
+    ...comIA,
+    analisarTema6: async (entrada) => {
+      recebido = entrada.laudo;
+      return comIA.analisarTema6(entrada);
+    },
+  };
+  const { app } = await montar({ ia, anonimizar });
+
+  const r = await app.inject({ method: "POST", url: "/api/analise", payload: caso });
+
+  assert.equal(r.statusCode, 200);
+  assert.match(recebido, /\[NOME\]/);
+  assert.ok(!recebido.includes("Maria Aparecida"));
   await app.close();
 });
 
@@ -215,13 +251,6 @@ test("upload de documento está no app e a falha de upload não ecoa o corpo", a
 });
 
 test("erro no meio da análise não vaza o laudo nem o CPF", async () => {
-  const falhaComEco: Dependencias["ia"] = {
-    ...comIA,
-    analisarTema6: async (entrada) => {
-      // Provedor que ecoa o prompt na mensagem de erro.
-      throw new Error(`provedor recusou o prompt: ${entrada.laudo}`);
-    },
-  };
   const { app, logs } = await montar({ ia: falhaComEco });
 
   const r = await app.inject({ method: "POST", url: "/api/analise", payload: caso });
@@ -230,6 +259,21 @@ test("erro no meio da análise não vaza o laudo nem o CPF", async () => {
   assert.equal(typeof r.json().erro, "string");
   for (const segredo of ["MARCADOR", CPF]) {
     assert.ok(!r.body.includes(segredo), `resposta vazou ${segredo}`);
+    assert.ok(!logs().includes(segredo), `log vazou ${segredo}`);
+  }
+  await app.close();
+});
+
+test("análise com progresso: erro no meio não vaza no evento nem no log", async () => {
+  // A rota de progresso sequestra a resposta (SSE) e escapa do tratador de erros.
+  const { app, logs } = await montar({ ia: falhaComEco });
+
+  const r = await app.inject({ method: "POST", url: "/api/analise/progresso", payload: caso });
+
+  assert.equal(r.statusCode, 200);
+  assert.match(r.body, /"tipo":"erro"/);
+  for (const segredo of ["MARCADOR", CPF]) {
+    assert.ok(!r.body.includes(segredo), `evento vazou ${segredo}`);
     assert.ok(!logs().includes(segredo), `log vazou ${segredo}`);
   }
   await app.close();

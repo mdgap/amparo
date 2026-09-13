@@ -95,6 +95,18 @@ test("avaliação do Tema 6 vai para o banco sem evidência, justificativa ou pe
   assert.equal(registro.tema6?.resumo.faltantes, 1);
 });
 
+test("dossiê vai para o banco sem o prompt, que carrega o texto do documento", () => {
+  const registro = montarRegistro({
+    medicamento,
+    posologia,
+    rota: definirRota(medicamento, posologia),
+    tema6: null,
+    dossie: { memorando: "minuta", prompt: { sistema: "s", usuario: "MARCADOR-PROMPT com o laudo" } },
+  });
+
+  assert.deepEqual(registro.dossie, { memorando: "minuta" });
+});
+
 test("item do histórico resume a análise para a lista", () => {
   const rota = definirRota(comCustoAnual(400000), posologia);
   const item = resumirParaHistorico(

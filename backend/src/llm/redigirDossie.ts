@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { pedirJSON } from "./cliente.ts";
-import { listaDeTextos } from "./tolerante.ts";
+import { listaDeTextos, semMarkdown } from "./tolerante.ts";
 import { SISTEMA } from "./prompts/sistema.ts";
 import { montarContexto, type TrechoEncontrado } from "../rag/busca.ts";
 import type { ResultadoRota } from "../domain/types.ts";
@@ -14,23 +14,27 @@ const schema = z.object({
   trechoDePeticao: z.string(),
 });
 
-export type Dossie = z.infer<typeof schema>;
+export type Dossie = z.infer<typeof schema> & {
+  /** O prompt exatamente como foi enviado — para auditoria. */
+  prompt?: { sistema: string; usuario: string };
+};
 
 /**
  * Redige as cinco peças do dossiê. Os números (custo, SM, foro) entram no
  * prompt já calculados e o modelo é instruído a repeti-los sem recalcular.
  */
-export async function redigirDossie(args: {
-  rota: ResultadoRota;
-  resumo: ResumoTema6;
-  medicamento: string;
-  alertaENatJus?: string;
-  fontes: TrechoEncontrado[];
-}): Promise<Dossie> {
+/**
+ * Monta a mensagem de redação. Extraída para que a ajuda contextual mostre o
+ * MESMO template, chamado com placeholders — sem risco de divergir do que é
+ * realmente enviado ao modelo.
+ */
+export function montarPromptDossie(
+  args: Parameters<typeof redigirDossie>[0],
+  contexto: string,
+): string {
   const { rota, resumo } = args;
-
   const prompt = `CONTEXTO NORMATIVO (cite como [F1], [F2]...):
-${montarContexto(args.fontes) || "(corpus vazio — escreva 'sem fonte no corpus' onde citaria)"}
+${contexto}
 
 NÚMEROS JÁ CALCULADOS PELO MOTOR — repita exatamente, não recalcule:
 - Medicamento: ${args.medicamento}
@@ -57,5 +61,31 @@ ${resumo.aptoParaProtocolo ? "" : 'IMPORTANTE: nem todos os requisitos estão cu
 
 Responda SOMENTE com JSON: {"memorandoDeRota","requerimentoAdministrativo","resumoDeEvidencia","pendenciasDoCliente":[],"trechoDePeticao"}`;
 
-  return pedirJSON({ system: SISTEMA, prompt, schema, maxTokens: 8192 });
+  return prompt;
+}
+
+export async function redigirDossie(args: {
+  rota: ResultadoRota;
+  resumo: ResumoTema6;
+  medicamento: string;
+  alertaENatJus?: string;
+  fontes: TrechoEncontrado[];
+}): Promise<Dossie> {
+  const { rota, resumo } = args;
+
+  const prompt = montarPromptDossie(args, montarContexto(args.fontes) || "(corpus vazio — escreva 'sem fonte no corpus' onde citaria)");
+
+  const dossie = await pedirJSON({ system: SISTEMA, prompt, schema, maxTokens: 8192 });
+  const registro = { sistema: SISTEMA, usuario: prompt };
+
+  // A instrução no prompt reduz o Markdown; a limpeza aqui é o que garante.
+  return {
+    ...dossie,
+    memorandoDeRota: semMarkdown(dossie.memorandoDeRota),
+    requerimentoAdministrativo: semMarkdown(dossie.requerimentoAdministrativo),
+    resumoDeEvidencia: semMarkdown(dossie.resumoDeEvidencia),
+    trechoDePeticao: semMarkdown(dossie.trechoDePeticao),
+    pendenciasDoCliente: dossie.pendenciasDoCliente.map(semMarkdown),
+    prompt: registro,
+  };
 }

@@ -106,3 +106,42 @@ export const IconeBalanca = (p: Props) => (
     <path d="M5 8h14l-3 5a3 3 0 0 1-8 0Z" />
   </Svg>
 );
+
+/* Ícones da identidade Juscare — mesmos traços da biblioteca Lucide. */
+
+export const IconeInfo = (p: Props) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 16v-4" />
+    <path d="M12 8h.01" />
+  </Svg>
+);
+
+export const IconeCalculadora = (p: Props) => (
+  <Svg {...p}>
+    <rect height="20" rx="2" width="16" x="4" y="2" />
+    <line x1="8" x2="16" y1="6" y2="6" />
+    <path d="M8 10h.01" />
+    <path d="M12 10h.01" />
+    <path d="M16 10h.01" />
+    <path d="M8 14h.01" />
+    <path d="M12 14h.01" />
+    <line x1="16" x2="16" y1="14" y2="18" />
+    <path d="M8 18h.01" />
+    <path d="M12 18h.01" />
+  </Svg>
+);
+
+export const IconeEscudo = (p: Props) => (
+  <Svg {...p}>
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    <path d="m9 12 2 2 4-4" />
+  </Svg>
+);
+
+export const IconeRemedio = (p: Props) => (
+  <Svg {...p}>
+    <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+    <path d="m8.5 8.5 7 7" />
+  </Svg>
+);

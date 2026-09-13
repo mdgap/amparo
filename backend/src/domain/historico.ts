@@ -120,8 +120,16 @@ export function montarRegistro({
         aptoParaProtocolo: tema6.resumo.aptoParaProtocolo,
       },
     },
-    dossie,
+    dossie: semPrompt(dossie),
   };
+}
+
+/** O prompt do dossiê carrega o texto do documento: vai na resposta, não no banco. */
+function semPrompt(dossie: unknown): unknown {
+  if (!dossie || typeof dossie !== "object") return dossie;
+  const resto = { ...(dossie as Record<string, unknown>) };
+  delete resto.prompt;
+  return resto;
 }
 
 export function resumirParaHistorico(linha: LinhaAnalise): ItemHistorico {

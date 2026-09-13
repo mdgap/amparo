@@ -1,4 +1,3 @@
-import { IconeAusente, IconeOk, IconeRevisao } from "./Icones.tsx";
 import type { StatusRequisito } from "../lib/api.ts";
 
 /**
@@ -9,23 +8,19 @@ import type { StatusRequisito } from "../lib/api.ts";
 export const ESTADOS = {
   ok: {
     rotulo: "Evidência localizada",
-    Icone: IconeOk,
-    classe: "bg-[var(--status-ok-bg)] text-[var(--status-ok-fg)]",
+    classe: "bg-[var(--status-ok-bg)] text-[var(--status-ok-fg)] border-[#c8e5d2]",
   },
   fraco: {
     rotulo: "Revisão necessária",
-    Icone: IconeRevisao,
-    classe: "bg-[var(--status-atencao-bg)] text-[var(--status-atencao-fg)]",
+    classe: "bg-[var(--status-atencao-bg)] text-[var(--status-atencao-fg)] border-[#efd7a8]",
   },
   falta: {
     rotulo: "Informação não localizada",
-    Icone: IconeAusente,
-    classe: "bg-[var(--status-erro-bg)] text-[var(--status-erro-fg)]",
+    classe: "bg-[var(--status-erro-bg)] text-[var(--status-erro-fg)] border-[#f0cbc5]",
   },
   nao_avaliado: {
     rotulo: "Não analisado",
-    Icone: IconeAusente,
-    classe: "bg-[var(--surface-tertiary)] text-[var(--muted)]",
+    classe: "bg-[#eef1ef] text-[#536259] border-[#d7ded9]",
   },
 } as const satisfies Record<StatusRequisito, unknown>;
 
@@ -36,12 +31,13 @@ export function Estado({
   status: StatusRequisito;
   className?: string;
 }) {
-  const { rotulo, Icone, classe } = ESTADOS[status];
+  const { rotulo, classe } = ESTADOS[status];
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${classe} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-[0.375rem] border px-2 py-[0.3125rem] text-[0.6875rem] leading-[1.5] ${classe} ${className}`}
     >
-      <Icone className="size-4 shrink-0" />
+      {/* O ponto reforça; quem carrega o significado é o texto ao lado. */}
+      <span aria-hidden="true" className="ponto-estado" />
       {rotulo}
     </span>
   );

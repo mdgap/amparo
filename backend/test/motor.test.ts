@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { calcularCustoAnual } from "../src/domain/custo.ts";
 import { definirRota } from "../src/domain/rota.ts";
 import { resumirTema6, REQUISITOS_TEMA_6 } from "../src/domain/tema6.ts";
-import { semNulos } from "../src/llm/tolerante.ts";
+import { semMarkdown, semNulos } from "../src/llm/tolerante.ts";
 import { classificarPdf } from "../src/documentos/pdf.ts";
 import {
   extrairPosologia, precoCmed, reconhecerMedicamentos, unidadesDaApresentacao,
@@ -410,4 +410,28 @@ test("PDF digitalizado é reconhecido como imagem, não como documento vazio", (
 
   assert.equal(classificarPdf("", 5).natureza, "vazio");
   assert.equal(classificarPdf("   \n  ", 5).natureza, "vazio");
+});
+
+test("peça do dossiê sai sem Markdown", () => {
+  const bruto = [
+    "MEMORANDO INTERNO",
+    "",
+    "1. **Situação atual** – O caso **NÃO está pronto** para protocolo.",
+    "## Fundamento",
+    "- comprovante de registro na ANVISA;",
+    "- declaração de hipossuficiência.",
+    "> Atenção: valor provisório.",
+    "Use `npm` nunca. Veja [o guia](https://cnj.jus.br/guia).",
+    "---",
+    "*Elaborado por: equipe de triagem.*",
+  ].join("\n");
+
+  const limpo = semMarkdown(bruto);
+  assert.doesNotMatch(limpo, /\*|^#|`|^>/m);
+  assert.match(limpo, /1\. Situação atual – O caso NÃO está pronto para protocolo\./);
+  assert.match(limpo, /— comprovante de registro na ANVISA;/);
+  assert.match(limpo, /o guia \(https:\/\/cnj\.jus\.br\/guia\)/);
+  assert.match(limpo, /Elaborado por: equipe de triagem\./);
+  // Asterisco de multiplicação não é negrito e não pode sumir.
+  assert.equal(semMarkdown("30 caixas * R$ 12,00"), "30 caixas * R$ 12,00");
 });

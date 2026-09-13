@@ -1,11 +1,16 @@
 import type { FastifyInstance } from "fastify";
 import { extrairTextoDePdf } from "../documentos/pdf.ts";
 import { lerPdfPorOcr } from "../documentos/ocr.ts";
+import { anonimizar } from "../documentos/anonimizar.ts";
 
 /** Teto do arquivo. Laudo é curto; acima disso é engano ou abuso. */
 const TAMANHO_MAXIMO = 20 * 1024 * 1024;
 /** Abaixo disto o OCR leu mal e a interface precisa pedir conferência. */
 const CONFIANCA_MINIMA = 70;
+/** Falha fechada: sem anonimização, o documento não passa. */
+const ERRO_ANONIMIZADOR =
+  "O serviço de anonimização não respondeu. O documento não foi processado — " +
+  "nenhum texto é enviado para análise sem passar por ele.";
 
 export async function rotasDeDocumento(app: FastifyInstance) {
   /**
@@ -31,9 +36,12 @@ export async function rotasDeDocumento(app: FastifyInstance) {
     if (!extraido) return reply.code(422).send({ erro: "não consegui abrir este PDF" });
 
     if (extraido.natureza === "digital") {
+      const limpo = await anonimizar(extraido.texto).catch(() => null);
+      if (!limpo) return reply.code(503).send({ erro: ERRO_ANONIMIZADOR });
       return {
         origem: "texto-do-pdf",
-        texto: extraido.texto,
+        texto: limpo.texto,
+        removidos: limpo.removidos,
         paginas: extraido.paginas,
         precisaConferencia: false,
       };
@@ -47,9 +55,13 @@ export async function rotasDeDocumento(app: FastifyInstance) {
       });
     }
 
+    const limpo = await anonimizar(ocr.texto).catch(() => null);
+    if (!limpo) return reply.code(503).send({ erro: ERRO_ANONIMIZADOR });
+
     return {
       origem: "ocr",
-      texto: ocr.texto,
+      texto: limpo.texto,
+      removidos: limpo.removidos,
       paginas: ocr.paginasLidas,
       confianca: ocr.confianca,
       // OCR erra, e nome mal lido não é encontrado depois pela anonimização.

@@ -42,11 +42,25 @@ services:
       EMBEDDINGS_DIM: ${EMBEDDINGS_DIM:-1024}
       # Mesma origem via nginx: CORS não é usado, fica restrito por garantia.
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      ANONIMIZADOR_URL: http://anonimizador:8000
     expose:
       - "3333"
     depends_on:
       db:
         condition: service_healthy
+      anonimizador:
+        condition: service_healthy
+
+  # Anonimização na própria infraestrutura: o documento identificado não sai
+  # daqui. Presidio + modelo pt do spaCy, com reconhecedores brasileiros
+  # (CPF, cartão do SUS, CNPJ, CEP, CRM) que o Presidio não traz de fábrica.
+  anonimizador:
+    build:
+      context: .
+      dockerfile: anonimizador/Dockerfile
+    restart: unless-stopped
+    expose:
+      - "8000"
 
   web:
     build:
