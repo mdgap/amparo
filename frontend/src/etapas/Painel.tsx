@@ -108,7 +108,7 @@ export function Painel({ catalogo, abrindo, onAbrir, onNovoCaso }: Props) {
             <Alert.Title>Histórico indisponível agora</Alert.Title>
             <Alert.Description>
               O painel não conseguiu ler as análises salvas. Dá para começar um
-              caso novo normalmente — ele só não aparece aqui até o banco voltar.
+              caso novo normalmente. Ele só não aparece aqui até o banco voltar.
             </Alert.Description>
           </Alert.Content>
         </Alert>
@@ -201,7 +201,7 @@ export function Painel({ catalogo, abrindo, onAbrir, onNovoCaso }: Props) {
                 Últimas análises
               </h2>
               <p className="text-xs text-muted">
-                Documentos e trechos citados não são guardados — por privacidade.
+                Documentos e trechos citados não são guardados, por privacidade.
               </p>
             </div>
 

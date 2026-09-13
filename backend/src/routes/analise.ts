@@ -70,7 +70,7 @@ const analiseSchema = z.object({
 const PII = /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/;
 
 const ERRO_CPF =
-  "CPF detectado nos documentos. Remova dados pessoais antes de enviar — a ferramenta trabalha sem identificação do paciente.";
+  "CPF detectado nos documentos. Remova dados pessoais antes de enviar. A ferramenta trabalha sem identificação do paciente.";
 const AVISO_SEM_IA = "OPENROUTER_API_KEY ausente: só o motor de regras foi executado.";
 
 /** Passos que a interface acompanha, na ordem em que acontecem. */
@@ -185,7 +185,7 @@ export async function rotasDeAnalise(app: FastifyInstance, { repositorio, ia, an
     aviso({
       id: "placar",
       estado: "feito",
-      detalhe: `${resumo.ok} ok, ${resumo.fracos} fraco(s), ${resumo.faltantes} faltando — ${resumo.aptoParaProtocolo ? "apto" : "não apto"} para protocolo`,
+      detalhe: `${resumo.ok} ok, ${resumo.fracos} fraco(s), ${resumo.faltantes} faltando; ${resumo.aptoParaProtocolo ? "apto" : "não apto"} para protocolo`,
     });
 
     // Dever do juízo, não requisito do autor — mas quem protocola sem a nota

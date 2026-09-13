@@ -224,7 +224,7 @@ export function App() {
       <footer className="mt-10 border-t border-[var(--border)] pt-6 text-sm text-muted">
         Ferramenta de apoio à triagem. As saídas são minutas revisáveis, não
         substituem a conferência do advogado responsável, e o verde nos achados
-        indica evidência localizada no documento — nunca aprovação jurídica.
+        indica evidência localizada no documento, nunca aprovação jurídica.
       </footer>
     </Shell>
     </ProvedorDeAjuda>

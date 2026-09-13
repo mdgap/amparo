@@ -109,7 +109,7 @@ export function avaliarConitec(
       id,
       status: "fraco",
       justificativa:
-        "Há recomendação desfavorável da CONITEC. Nessa hipótese, o deferimento judicial exige demonstração da ilegalidade do ato — que não foi informada.",
+        "Há recomendação desfavorável da CONITEC. Nessa hipótese, o deferimento judicial exige demonstração da ilegalidade do ato, que não foi informada.",
       evidencias: [`Decisão desfavorável da CONITEC${dados.desde ? ` em ${dados.desde}` : ""}`],
       pendencia:
         "Demonstre a ilegalidade do ato da CONITEC: vício de procedimento, motivação ou desconformidade com a legislação de regência.",

@@ -52,7 +52,7 @@ export function calcularCustoAnual(
       `Duração: ${posologia.diasPorAno} dias/ano → ${unidadesPorAno} unidades/ano`,
       `Apresentação com ${medicamento.unidadesPorApresentacao} un. → ${apresentacoesPorAno} apresentações/ano (arredondado para cima)`,
       provisorio
-        ? `Preço da apresentação: ${brl(medicamento.precoApresentacao)} — orçamento da parte autora, NÃO consta da tabela CMED`
+        ? `Preço da apresentação: ${brl(medicamento.precoApresentacao)} (orçamento da parte autora, NÃO consta da tabela CMED)`
         : `Preço CMED (PMVG) da apresentação: ${brl(medicamento.precoApresentacao)}`,
       `Custo anual: ${apresentacoesPorAno} x ${brl(medicamento.precoApresentacao)} = ${brl(custoAnual)}`,
       `Salário mínimo usado: ${brl(salarioMinimo)} (vigência ${parametros.salarioMinimo.vigenciaDesde})`,
@@ -60,7 +60,7 @@ export function calcularCustoAnual(
       `Teto do Tema 1234: ${parametros.tetoCompetenciaEmSalariosMinimos} SM = ${brl(tetoEmReais(parametros))}`,
       ...(provisorio
         ? [
-            "ATENÇÃO: valor PROVISÓRIO. Não constando o preço na CMED, o Guia Rápido do CNJ orienta oficiar a CMED e, sem resposta a tempo, usar o orçamento da parte autora como referência. Confirmar antes de protocolar — este número define a competência.",
+            "ATENÇÃO: valor PROVISÓRIO. Não constando o preço na CMED, o Guia Rápido do CNJ orienta oficiar a CMED e, sem resposta a tempo, usar o orçamento da parte autora como referência. Confirmar antes de protocolar: este número define a competência.",
           ]
         : []),
     ],

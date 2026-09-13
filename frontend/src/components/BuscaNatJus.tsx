@@ -36,7 +36,7 @@ export function BuscaNatJus({ onImportar }: { onImportar: (texto: string) => voi
       onImportar(r.texto);
       const total = Object.values(r.removidos).reduce((a, b) => a + b, 0);
       setImportada(
-        `Nota ${id} importada${total ? ` — ${total} dado(s) pessoal(is) do processo de origem foram substituídos por marcador.` : "."}`,
+        `Nota ${id} importada${total ? `: ${total} dado(s) pessoal(is) do processo de origem foram substituídos por marcador.` : "."}`,
       );
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Falha ao importar a nota.");
@@ -92,7 +92,7 @@ export function BuscaNatJus({ onImportar }: { onImportar: (texto: string) => voi
         <>
           <p className="mt-4 text-sm text-muted">
             {total} nota(s) no e-NatJus. Abra a que tiver o CID mais próximo do
-            caso e cole o conteúdo abaixo — a escolha é sua.
+            caso e cole o conteúdo abaixo. A escolha é sua.
           </p>
           <ul className="mt-3 flex max-h-64 flex-col gap-2 overflow-y-auto">
             {notas.map((n) => (

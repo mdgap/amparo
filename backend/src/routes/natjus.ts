@@ -31,8 +31,8 @@ export async function rotasNatJus(app: FastifyInstance) {
       // Degrada: sem nota, o produto segue como antes de existir esta busca.
       return reply.code(502).send({
         erro:
-          "Não consegui consultar o e-NatJus agora. A consulta pública do CNJ pode estar fora do ar — " +
-          "cole a nota manualmente se já tiver.",
+          "Não consegui consultar o e-NatJus agora. A consulta pública do CNJ pode estar fora do ar. " +
+          "Cole a nota manualmente se já tiver.",
       });
     }
   });
@@ -62,7 +62,7 @@ export async function rotasNatJus(app: FastifyInstance) {
       if (!limpo) {
         return reply.code(503).send({
           erro:
-            "O serviço de anonimização não respondeu. A nota não foi importada — " +
+            "O serviço de anonimização não respondeu. A nota não foi importada: " +
             "ela contém dados do paciente daquele processo.",
         });
       }

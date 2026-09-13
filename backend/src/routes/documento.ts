@@ -9,7 +9,7 @@ const TAMANHO_MAXIMO = 20 * 1024 * 1024;
 const CONFIANCA_MINIMA = 70;
 /** Falha fechada: sem anonimização, o documento não passa. */
 const ERRO_ANONIMIZADOR =
-  "O serviço de anonimização não respondeu. O documento não foi processado — " +
+  "O serviço de anonimização não respondeu. O documento não foi processado: " +
   "nenhum texto é enviado para análise sem passar por ele.";
 
 export async function rotasDeDocumento(app: FastifyInstance) {

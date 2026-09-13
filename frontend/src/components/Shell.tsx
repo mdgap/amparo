@@ -50,7 +50,7 @@ export function Shell({ etapa, liberadas, onIr, children }: Props) {
         {/* Logo escura: a lateral é clara. A versão clara fica em public/ para
             superfícies escuras. */}
         <button
-          aria-label="Amparo — voltar ao Painel de casos"
+          aria-label="Amparo: voltar ao Painel de casos"
           className="self-start rounded-lg px-1 lg:px-3"
           type="button"
           onClick={() => onIr("painel")}
