@@ -245,14 +245,14 @@ export function catalogoDePontos(): PontoDeIA[] {
       porQue:
         "Não usa modelo, e antes usava. Situação na CONITEC vem de consulta ao portal, e hipossuficiência vem de declaração e comprovante — nenhum dos dois está no laudo ou na receita. Pedir ao modelo que os encontrasse nos documentos produzia 'falta' em todo caso, não por falha dele, mas porque o dado nunca era perguntado.",
       entradas: [
-        "Situação na CONITEC: nunca avaliado, em análise desde uma data, ou recomendação desfavorável",
+        "Situação na CONITEC: nunca avaliado, em análise desde uma data, ou recomendação desfavorável — proposta pelo painel público de tecnologias demandadas, confirmada pelo advogado",
         "Se houve demonstração da ilegalidade do ato, quando a recomendação for desfavorável",
         "Declaração de hipossuficiência e comprovante de renda",
       ],
       saida:
         "Os requisitos (b) e (f) com status, justificativa e pendência, que entram no placar junto com os quatro avaliados pelo modelo.",
       limites:
-        "A mora é contada por data: 180 dias prorrogáveis por 90, do art. 19-R da Lei 8.080/1990. Em análise sem data informada não vira mora por suposição — fica como revisão necessária. Recomendação desfavorável só é ok com demonstração da ilegalidade do ato, que é juízo do advogado.",
+        "A consulta ao painel da CONITEC PROPÕE a situação, não decide: o mesmo princípio ativo aparece várias vezes, com decisões opostas em anos diferentes, e qual delas vale depende da indicação clínica do caso. A mora é contada por data: 180 dias prorrogáveis por 90, do art. 19-R da Lei 8.080/1990. Em análise sem data informada não vira mora por suposição — fica como revisão necessária. Recomendação desfavorável só é ok com demonstração da ilegalidade do ato, que é juízo do advogado.",
     },
     {
       id: "anonimizacao",

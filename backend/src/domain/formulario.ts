@@ -163,3 +163,20 @@ export function avaliarHipossuficiencia(
       "Obter declaração de hipossuficiência assinada e comprovante de renda da família.",
   };
 }
+
+/**
+ * Tradução do status do painel da CONITEC para a hipótese do requisito (b).
+ *
+ * O painel lista só o que foi demandado: medicamento que não aparece nele
+ * nunca teve pedido de incorporação, que é uma das hipóteses da tese. Por isso
+ * a ausência é informação, não falta de dado.
+ */
+export function situacaoDoStatusConitec(status: string): SituacaoConitec {
+  const t = status.toLowerCase();
+  if (t.includes("em análise") || t.includes("em analise")) return "em_analise";
+  if (t.includes("não incorporação") || t.includes("nao incorporacao")) return "desfavoravel";
+  if (t.includes("exclusão") || t.includes("exclusao")) return "desfavoravel";
+  // Incorporado, encerrado a pedido do demandante ou por decisão da Conitec:
+  // nenhum deles é "nunca avaliado" nem caracteriza mora. Fica para conferência.
+  return "nao_informado";
+}

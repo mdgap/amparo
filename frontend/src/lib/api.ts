@@ -314,6 +314,24 @@ export const api = {
     if (!r.ok) throw new Error(json.erro ?? "Falha ao importar a nota");
     return json as { texto: string; removidos: Record<string, number> };
   },
+  /** Situação do medicamento no painel da CONITEC (requisito b do Tema 6). */
+  conitec: async (q: string) => {
+    const r = await fetch(`/api/conitec?q=${encodeURIComponent(q)}`);
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.erro ?? "Falha ao consultar a CONITEC");
+    return json as {
+      registros: {
+        tecnologia: string;
+        indicacao: string | null;
+        status: string;
+        data_protocolo: string | null;
+        data_decisao: string | null;
+        situacaoSugerida: "nao_informado" | "nunca_avaliado" | "em_analise" | "desfavoravel";
+      }[];
+      nuncaDemandado: boolean;
+      painelVersao: string | null;
+    };
+  },
   cmed: async (q: string) => {
     const r = await fetch(`/api/cmed?q=${encodeURIComponent(q)}`);
     const json = await r.json();

@@ -127,6 +127,26 @@ que não funcionar.
 Custo: a imagem carrega o modelo `pt_core_news_lg`. Conte ~2 GB de memória e
 cerca de 90s de warm-up no primeiro start.
 
+## Painel da CONITEC
+
+Carrega sozinho no start, ao lado da CMED, com os mesmos cuidados: segundo
+plano, trava contra carga concorrente e recarga só se a lista tiver mais de 30
+dias. São ~1.200 linhas num .xlsx de 120 KB.
+
+É a fonte do requisito (b) do Tema 6: nome da tecnologia, data do protocolo,
+status e data da decisão — o que permite apurar a mora do art. 19-R.
+
+Para forçar uma recarga:
+
+```bash
+docker exec <container-da-api> node dist/scripts/conitec.js
+```
+
+O portal publica o arquivo com a data no nome e o serve por um link indireto,
+com o HTML escapado em JSON. O script descobre os dois saltos sozinho; se o
+portal mudar, ele falha com mensagem clara e a consulta simplesmente não
+aparece na tela.
+
 ## Detalhes que não são óbvios
 
 **Timeout do nginx.** A análise completa leva cerca de dois minutos (duas

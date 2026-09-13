@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { query } from "../db.ts";
 import { extrairPosologia, reconhecerMedicamentos } from "../domain/cmed.ts";
+import { situacaoDoStatusConitec } from "../domain/formulario.ts";
 
 /** Busca de apresentação na tabela CMED — origem do preço usado no cálculo. */
 export async function rotasCmed(app: FastifyInstance) {
@@ -100,5 +101,44 @@ export async function rotasCmed(app: FastifyInstance) {
     );
 
     return { achados, apresentacoes, posologia };
+  });
+
+  /**
+   * Situação do medicamento no painel da CONITEC — fonte do requisito (b).
+   *
+   * Devolve os registros e a situação sugerida, NÃO a resposta final: o mesmo
+   * princípio ativo aparece várias vezes, com decisões opostas em anos
+   * diferentes, e qual delas vale depende da indicação clínica do caso. Quem
+   * escolhe é o advogado, na conferência.
+   */
+  app.get<{ Querystring: { q?: string } }>("/conitec", async (req, reply) => {
+    const q = (req.query.q ?? "").trim();
+    if (q.length < 4) return reply.code(400).send({ erro: "informe ao menos 4 caracteres" });
+
+    const registros = await query<{
+      tecnologia: string;
+      indicacao: string | null;
+      status: string;
+      data_protocolo: string | null;
+      data_decisao: string | null;
+      tabela_versao: string;
+    }>(
+      `SELECT tecnologia, indicacao, status, data_protocolo, data_decisao, tabela_versao
+         FROM conitec_demanda
+        WHERE unaccent(tecnologia) ILIKE unaccent($1)
+        ORDER BY data_protocolo DESC NULLS LAST
+        LIMIT 12`,
+      [`%${q}%`],
+    );
+
+    return {
+      registros: registros.map((r) => ({
+        ...r,
+        situacaoSugerida: situacaoDoStatusConitec(r.status),
+      })),
+      // Ausência no painel é informação: nunca houve pedido de incorporação.
+      nuncaDemandado: registros.length === 0,
+      painelVersao: registros[0]?.tabela_versao ?? null,
+    };
   });
 }

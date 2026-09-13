@@ -19,4 +19,12 @@ echo "→ conferindo a lista de preços da CMED (em segundo plano)"
     || echo "aviso: carga da CMED falhou; rode 'node dist/scripts/cmed.js' manualmente"
 ) &
 
+# Painel de tecnologias demandadas à CONITEC: 120 KB, ~1.200 linhas. Mesmo
+# cuidado da CMED — segundo plano, e só recarrega se estiver velho.
+echo "→ conferindo o painel da CONITEC (em segundo plano)"
+(
+  node dist/scripts/conitec.js --se-necessario \
+    || echo "aviso: carga do painel da CONITEC falhou; rode 'node dist/scripts/conitec.js' manualmente"
+) &
+
 exec "$@"

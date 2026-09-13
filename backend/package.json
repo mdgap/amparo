@@ -12,6 +12,7 @@
     "db:ingest": "node --env-file-if-exists=../.env src/scripts/ingest.ts",
     "typecheck": "tsc -p tsconfig.test.json",
     "db:cmed": "node --env-file-if-exists=../.env src/scripts/cmed.ts",
+    "db:conitec": "node --env-file-if-exists=../.env src/scripts/conitec.ts",
     "db:demo": "node --env-file-if-exists=../.env src/scripts/demonstracao.ts"
   },
   "dependencies": {
