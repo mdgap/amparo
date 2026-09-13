@@ -3,11 +3,54 @@ import { Button } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
 import { ROTULO, usePontosDeIA } from "../components/AjudaIA.tsx";
 import { IconeEscudo, IconeSeta } from "../components/Icones.tsx";
+import { ETAPAS } from "../components/Shell.tsx";
 import { api, brl, PASSOS_DA_ANALISE } from "../lib/api.ts";
 
 interface Props {
   onNovoCaso: () => void;
 }
+
+type EtapaDaAnalise = (typeof ETAPAS)[number]["id"];
+
+/**
+ * O que a pessoa faz em cada etapa e o botão que leva à próxima. Nome, resumo,
+ * ícone e ordem vêm de ETAPAS, a mesma lista da barra lateral; o Record obriga
+ * a descrever aqui toda etapa que entrar lá.
+ */
+const PASSO_A_PASSO: Record<EtapaDaAnalise, { faz: string[]; avanca: string | null }> = {
+  documentos: {
+    faz: [
+      "Envie o PDF ou o texto de cada peça, ou cole o conteúdo direto no campo. Laudo médico e pedido administrativo são obrigatórios; receita e nota técnica do e-NatJus entram quando houver.",
+      "PDF digitalizado passa por OCR no servidor. Confira o texto lido antes de seguir — OCR erra.",
+      "Para conhecer o fluxo sem documento real, use “Carregar caso sintético”.",
+    ],
+    avanca: "Conferir informações",
+  },
+  conferencia: {
+    faz: [
+      "Busque a apresentação do medicamento na tabela CMED, pelo princípio ativo ou pelo nome comercial. O preço usado é o PMVG 0%, o que o Tema 1234 manda considerar. “Ler dos documentos” sugere medicamento e posologia a partir das peças enviadas — confira antes de escolher.",
+      "Confira a posologia: unidades por tomada, tomadas por dia e dias de tratamento por ano. Esses números definem o custo anual e, com ele, o foro.",
+      "Em Situação processual, informe a situação do medicamento na CONITEC — dá para consultar o painel dela ali mesmo — e se há declaração de hipossuficiência e comprovante de renda.",
+    ],
+    avanca: "Analisar caso",
+  },
+  achados: {
+    faz: [
+      "Enquanto a análise roda, a tela mostra o passo em andamento. No fim aparece a rota calculada pelo motor de regras: Justiça Federal ou Estadual, custo anual, valor em salários mínimos, polo passivo e custeio.",
+      "Abaixo, os seis requisitos do Tema 6, cada um com a situação, o trecho do documento quando localizado, a fonte oficial e a próxima providência. Verde indica evidência localizada no documento, nunca aprovação jurídica.",
+      "Se algum dado estiver errado, “Rever informações” volta para a conferência.",
+    ],
+    avanca: "Ver dossiê",
+  },
+  dossie: {
+    faz: [
+      "Leia as minutas: memorando de rota, requerimento administrativo, resumo de evidência e trecho de petição. “Copiar texto” leva cada uma para o seu editor.",
+      "A lista de pendências do cliente diz o que ainda falta pedir, em ordem de urgência. Enquanto houver requisito sem comprovação, o dossiê avisa que o caso não está pronto para protocolo.",
+      "Confira cada citação antes de usar a minuta.",
+    ],
+    avanca: null,
+  },
+};
 
 /** O que a anonimização e a guarda de dados garantem — descrito como está no código. */
 const PROTECAO = [
@@ -105,9 +148,56 @@ export function Sobre({ onNovoCaso }: Props) {
         titulo="Como o juscare funciona"
       />
 
-      <section aria-labelledby="sobre-caminho">
+      <section aria-labelledby="sobre-passo-a-passo">
+        <h2 className="fonte-display mb-1 text-lg font-bold" id="sobre-passo-a-passo">
+          Passo a passo
+        </h2>
+        <p className="mb-4 max-w-[50rem] text-sm leading-relaxed text-muted">
+          Tudo começa no Painel de casos, em “Novo caso”. A análise segue quatro
+          etapas, na ordem da barra lateral. As análises concluídas voltam para o
+          painel e podem ser reabertas depois — sem os documentos, que não são
+          guardados.
+        </p>
+        <ol className="cartao divide-y divide-[var(--border)]">
+          {ETAPAS.map((etapa, i) => {
+            const { faz, avanca } = PASSO_A_PASSO[etapa.id];
+            return (
+              <li key={etapa.id} className="flex gap-4 px-5 py-5">
+                <span className="icone-secao shrink-0">
+                  <etapa.Icone className="size-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="num text-xs text-muted">
+                    Etapa {i + 1} de {ETAPAS.length}
+                  </p>
+                  <h3 className="fonte-display font-bold">
+                    {etapa.rotulo}
+                    <span className="font-normal text-muted"> · {etapa.resumo}</span>
+                  </h3>
+                  <ul className="mt-2 flex list-disc flex-col gap-1.5 ps-5 text-sm leading-relaxed text-muted">
+                    {faz.map((texto) => (
+                      <li key={texto}>{texto}</li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 text-sm">
+                    {avanca ? (
+                      <>
+                        Para seguir: <strong className="font-semibold">{avanca}</strong>
+                      </>
+                    ) : (
+                      "Última etapa: as minutas saem daqui para a revisão do advogado."
+                    )}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      <section aria-labelledby="sobre-caminho" className="mt-10">
         <h2 className="fonte-display mb-3 text-lg font-bold" id="sobre-caminho">
-          O caminho de um caso
+          O que acontece ao clicar em “Analisar caso”
         </h2>
         <ol className="cartao divide-y divide-[var(--border)]">
           {PASSOS_DA_ANALISE.map((passo, i) => (
