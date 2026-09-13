@@ -23,7 +23,10 @@ export function Cabecalho({
   passo: string;
   /** 1 a 4. Sem isso, a trilha não é desenhada. */
   etapaAtual?: number;
-  /** Primeiro nível da trilha. `null` em tela de raiz, como o painel. */
+  /**
+   * Primeiro nível da trilha. `null` em tela raiz, como o painel: não há
+   * trilha, porque ela só repetiria o título logo abaixo.
+   */
   secao?: string | null;
   /** Ação principal da tela, alinhada à direita do título. */
   acao?: ReactNode;
@@ -32,22 +35,26 @@ export function Cabecalho({
     <>
       {/* Trilha de navegação no topo: dá respiro antes do título e diz onde
           se está, sem repetir o que a barra lateral já mostra. */}
-      <nav
-        aria-label="Trilha de navegação"
-        className="flex h-[3.875rem] items-center gap-3 border-b border-[var(--border)] text-xs text-muted"
-      >
-        {secao && (
-          <>
-            <span>{secao}</span>
-            <span aria-hidden="true" className="text-[#75877c]">
-              /
-            </span>
-          </>
-        )}
-        <span className="text-foreground">{titulo}</span>
-      </nav>
+      {secao !== null && (
+        <nav
+          aria-label="Trilha de navegação"
+          className="flex h-[3.875rem] items-center gap-3 border-b border-[var(--border)] text-xs text-muted"
+        >
+          <span>{secao}</span>
+          <span aria-hidden="true" className="text-[#75877c]">
+            /
+          </span>
+          <span className="text-foreground">{titulo}</span>
+        </nav>
+      )}
 
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4 pb-6 pt-7">
+      {/* Sem trilha, o topo soma a altura dela: o título fica na mesma linha
+          das outras telas. */}
+      <header
+        className={`flex flex-wrap items-end justify-between gap-x-6 gap-y-4 pb-6 ${
+          secao === null ? "pt-[5.625rem]" : "pt-7"
+        }`}
+      >
         <div className="max-w-[55rem]">
           <div className="mb-3 flex items-center gap-4">
             <p className="text-[0.6875rem] font-bold uppercase tracking-[0.0625rem] text-[#356149]">
