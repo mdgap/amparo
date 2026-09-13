@@ -1,5 +1,9 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
+-- Busca por nome de medicamento ignora acento: o painel da CONITEC escreve
+-- "ácido", o advogado digita "acido". Sem esta extensão a consulta ao
+-- painel quebra em tempo de execução (rota /api/conitec).
+CREATE EXTENSION IF NOT EXISTS unaccent;
 
 -- Documentos do corpus normativo oficial (Temas do STF, súmulas, leis, PCDT...).
 CREATE TABLE IF NOT EXISTS documento (
