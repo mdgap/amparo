@@ -3,7 +3,10 @@ import { Alert, Button } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
 import { Estado } from "../components/Estado.tsx";
 import { Prompts } from "../components/Prompts.tsx";
-import { IconeBalanca, IconeChevron, IconeDocumento, IconeOk, IconeSeta } from "../components/Icones.tsx";
+import {
+  IconeBalanca, IconeCalculadora, IconeChevron, IconeDocumento, IconeOk, IconeSeta,
+} from "../components/Icones.tsx";
+import { AjudaIA } from "../components/AjudaIA.tsx";
 import { brl, type Analise, type RequisitoTema6, type StatusRequisito } from "../lib/api.ts";
 import { CAMPOS_DOCUMENTO, type Documentos } from "../lib/caso.ts";
 
@@ -32,6 +35,7 @@ export function Achados({ analise, catalogo, documentos, onVoltar, onVerDossie }
             : "O motor de regras foi executado. A leitura dos documentos exige a etapa de IA, que está desligada."
         }
         passo="Etapa 3 de 4"
+        etapaAtual={3}
         titulo="Achados da análise"
       />
 
@@ -95,12 +99,26 @@ export function Achados({ analise, catalogo, documentos, onVoltar, onVerDossie }
           aria-label="Achados"
           className={painel === "achados" ? "flex flex-col gap-3" : "hidden lg:flex lg:flex-col lg:gap-3"}
         >
+          {tema6 && (
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="fonte-display text-lg font-bold">
+                Seis requisitos do Tema 6
+              </h2>
+              <AjudaIA
+                ponto="tema6"
+                rotulo="Como a IA classifica os seis requisitos do Tema 6"
+              />
+            </div>
+          )}
+
           {tema6
-            ? catalogo.map((req) => {
+            ? catalogo.map((req, i) => {
                 const av = tema6.avaliacoes.find((a) => a.id === req.id);
                 return (
                   <Achado
                     key={req.id}
+                    numero={i + 1}
+                    regra={req.regraOk}
                     acao={
                       av?.status === "ok"
                         ? "Nenhuma providência pendente. Confirme a peça no dossiê."
@@ -114,9 +132,11 @@ export function Achados({ analise, catalogo, documentos, onVoltar, onVerDossie }
                   />
                 );
               })
-            : catalogo.map((req) => (
+            : catalogo.map((req, i) => (
                 <Achado
                   key={req.id}
+                  numero={i + 1}
+                  regra={req.regraOk}
                   acao={req.comoComprovar}
                   evidencias={[]}
                   fonte={req.fonte}
@@ -179,37 +199,65 @@ function RotaResumo({ rota }: { rota: Analise["rota"] }) {
     { rotulo: "Custeio", valor: rota.custeio },
   ];
 
+  /* A métrica que decide o foro ganha destaque em verde-lima sobre o fundo escuro. */
+  const principal = metricas[1];
+  const demais = metricas.filter((m) => m !== principal);
+
   return (
-    <section className="rounded-2xl border border-[var(--border)] bg-surface p-6">
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <IconeBalanca className="size-5" />
-        <h2 className="fonte-display text-lg font-semibold">
-          Justiça {rota.justica === "federal" ? "Federal" : "Estadual"}
-        </h2>
-        <span className="rounded-full bg-[var(--surface-tertiary)] px-3 py-1 text-sm text-muted">
-          cálculo determinístico, sem modelo de linguagem
-        </span>
+    <section className="cartao overflow-hidden border-[#214a32] p-0">
+      <div className="relative bg-[var(--foreground)] px-[1.625rem] pb-[1.5625rem] pt-6 text-white">
+        <span
+          aria-hidden="true"
+          className="gradiente-marca absolute inset-x-0 top-0 h-1"
+        />
+
+        <div className="flex flex-wrap items-center justify-between gap-3.5">
+          <div>
+            <p className="mb-1.5 text-[0.625rem] tracking-[0.1rem] text-[#adcbb6]">
+              ROTA DEFINIDA PELO MOTOR DE REGRAS
+            </p>
+            <h2 className="fonte-display flex items-center gap-2.5 text-[1.625rem] font-bold">
+              <IconeBalanca className="size-[1.4375rem] text-[#6fec63]" />
+              Justiça {rota.justica === "federal" ? "Federal" : "Estadual"}
+            </h2>
+          </div>
+          <span className="flex items-center gap-1.5 rounded-[0.375rem] border border-[#456951] bg-white/5 px-2.5 py-1.5 text-[0.6875rem] text-[#ddede2]">
+            <IconeCalculadora className="size-[0.9375rem]" />
+            Cálculo determinístico, sem modelo de linguagem
+          </span>
+        </div>
+
+        <dl className="mt-6 grid grid-cols-2 items-end gap-5 lg:grid-cols-4">
+          <div>
+            <dt className="mb-1.5 text-[0.6875rem] text-[#bbd1c2]">{principal!.rotulo}</dt>
+            <dd className="num fonte-display text-[1.75rem] font-bold leading-tight tracking-[-0.025rem] text-[#6fec63]">
+              {principal!.valor}
+            </dd>
+          </div>
+          {demais.map((m) => (
+            <div key={m.rotulo} className="lg:border-l lg:border-[#375a42] lg:pl-5">
+              <dt className="mb-1.5 text-[0.6875rem] text-[#bbd1c2]">{m.rotulo}</dt>
+              <dd className="num fonte-display text-[1.3125rem] font-bold leading-tight tracking-[-0.025rem]">
+                {m.valor}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </div>
 
-      <dl className="grid grid-cols-2 gap-5 lg:grid-cols-4">
-        {metricas.map((m) => (
-          <div key={m.rotulo}>
-            <dt className="text-sm text-muted">{m.rotulo}</dt>
-            <dd className="num mt-0.5 text-lg font-semibold">{m.valor}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="px-[1.625rem] py-5">
+        <div className="mb-3">
+          <AjudaIA
+            ponto="rota"
+            rotulo="Como o custo, o foro e o polo passivo são calculados"
+          />
+        </div>
 
-      <ul className="mt-5 flex flex-col gap-2 border-t border-[var(--border)] pt-4 text-sm">
-        {rota.fundamento.map((f) => (
-          <li key={f} className="flex gap-2">
-            <span aria-hidden="true" className="text-muted">
-              —
-            </span>
-            {f}
-          </li>
-        ))}
-      </ul>
+        <ul className="flex flex-col gap-[0.4375rem] text-xs text-[#4a6052]">
+          {rota.fundamento.map((f) => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
 
       <details className="mt-4 border-t border-[var(--border)] pt-4">
         <summary className="controle flex cursor-pointer list-none items-center gap-2 text-sm font-medium">
@@ -221,13 +269,14 @@ function RotaResumo({ rota }: { rota: Analise["rota"] }) {
             <li key={m}>{m}</li>
           ))}
         </ol>
-      </details>
+        </details>
+      </div>
     </section>
   );
 }
 
 function Achado({
-  titulo, status, resumo, evidencias, fonte, acao,
+  titulo, status, resumo, evidencias, fonte, acao, numero, regra,
 }: {
   titulo: string;
   status: StatusRequisito;
@@ -235,21 +284,26 @@ function Achado({
   evidencias: string[];
   fonte: string;
   acao: string;
+  numero: number;
+  regra?: string;
 }) {
   return (
-    <details className="group rounded-2xl border border-[var(--border)] bg-surface">
-      <summary className="controle flex cursor-pointer list-none items-start gap-3 p-6">
+    <details className="cartao group">
+      <summary className="controle flex cursor-pointer list-none items-start gap-2.5 p-[1.125rem] lg:px-5">
+        <span className="fonte-display shrink-0 pt-0.5 text-[0.6875rem] leading-[1.6] text-[#536b5d]">
+          {String(numero).padStart(2, "0")}
+        </span>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <h3 className="fonte-display text-lg font-semibold">{titulo}</h3>
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
+            <h3 className="fonte-display text-sm font-bold">{titulo}</h3>
             <Estado status={status} />
           </div>
-          <p className="mt-2 text-sm text-muted">{resumo}</p>
+          <p className="mt-2.5 text-[0.8125rem] leading-[1.65] text-[#45594d]">{resumo}</p>
         </div>
         <IconeChevron className="mt-1 size-5 shrink-0 text-muted transition-transform group-open:rotate-180" />
       </summary>
 
-      <div className="border-t border-[var(--border)] px-6 py-5">
+      <div className="border-t border-[var(--border)] px-5 py-5">
         {evidencias.length > 0 && (
           <div className="mb-5">
             <h4 className="mb-2 text-sm font-semibold">Trecho do documento</h4>
@@ -271,7 +325,13 @@ function Achado({
           <p className="text-base">{acao}</p>
         </div>
 
-        <p className="text-sm text-muted">Fonte: {fonte}</p>
+        <p className="mb-4 text-sm text-muted">Fonte: {fonte}</p>
+
+        <AjudaIA
+          destaque={regra}
+          ponto="tema6"
+          rotulo={`Como a IA avalia o requisito ${titulo}`}
+        />
       </div>
     </details>
   );

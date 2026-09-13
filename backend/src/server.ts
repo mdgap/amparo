@@ -5,6 +5,7 @@ import { rotasDeAnalise } from "./routes/analise.ts";
 import { rotasCmed } from "./routes/cmed.ts";
 import { rotasDeDocumento } from "./routes/documento.ts";
 import { rotasNatJus } from "./routes/natjus.ts";
+import { rotasDePrompts } from "./routes/prompts.ts";
 import multipart from "@fastify/multipart";
 
 const app = Fastify({ logger: true });
@@ -15,6 +16,7 @@ await app.register(multipart);
 await app.register(rotasCmed, { prefix: "/api" });
 await app.register(rotasDeDocumento, { prefix: "/api" });
 await app.register(rotasNatJus, { prefix: "/api" });
+await app.register(rotasDePrompts, { prefix: "/api" });
 
 /**
  * Falha inesperada vira mensagem em português no campo `erro`, que é o que a

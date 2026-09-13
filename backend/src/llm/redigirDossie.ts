@@ -23,17 +23,18 @@ export type Dossie = z.infer<typeof schema> & {
  * Redige as cinco peças do dossiê. Os números (custo, SM, foro) entram no
  * prompt já calculados e o modelo é instruído a repeti-los sem recalcular.
  */
-export async function redigirDossie(args: {
-  rota: ResultadoRota;
-  resumo: ResumoTema6;
-  medicamento: string;
-  alertaENatJus?: string;
-  fontes: TrechoEncontrado[];
-}): Promise<Dossie> {
+/**
+ * Monta a mensagem de redação. Extraída para que a ajuda contextual mostre o
+ * MESMO template, chamado com placeholders — sem risco de divergir do que é
+ * realmente enviado ao modelo.
+ */
+export function montarPromptDossie(
+  args: Parameters<typeof redigirDossie>[0],
+  contexto: string,
+): string {
   const { rota, resumo } = args;
-
   const prompt = `CONTEXTO NORMATIVO (cite como [F1], [F2]...):
-${montarContexto(args.fontes) || "(corpus vazio — escreva 'sem fonte no corpus' onde citaria)"}
+${contexto}
 
 NÚMEROS JÁ CALCULADOS PELO MOTOR — repita exatamente, não recalcule:
 - Medicamento: ${args.medicamento}
@@ -59,6 +60,20 @@ TAREFA — produza cinco peças:
 ${resumo.aptoParaProtocolo ? "" : 'IMPORTANTE: nem todos os requisitos estão cumpridos. Abra o memorando dizendo que o caso NÃO está pronto para protocolo e que a via administrativa/documentação deve ser completada antes.'}
 
 Responda SOMENTE com JSON: {"memorandoDeRota","requerimentoAdministrativo","resumoDeEvidencia","pendenciasDoCliente":[],"trechoDePeticao"}`;
+
+  return prompt;
+}
+
+export async function redigirDossie(args: {
+  rota: ResultadoRota;
+  resumo: ResumoTema6;
+  medicamento: string;
+  alertaENatJus?: string;
+  fontes: TrechoEncontrado[];
+}): Promise<Dossie> {
+  const { rota, resumo } = args;
+
+  const prompt = montarPromptDossie(args, montarContexto(args.fontes) || "(corpus vazio — escreva 'sem fonte no corpus' onde citaria)");
 
   const dossie = await pedirJSON({ system: SISTEMA, prompt, schema, maxTokens: 8192 });
   const registro = { sistema: SISTEMA, usuario: prompt };

@@ -6,6 +6,7 @@ import { Conferencia } from "./etapas/Conferencia.tsx";
 import { Achados } from "./etapas/Achados.tsx";
 import { DossieEtapa } from "./etapas/DossieEtapa.tsx";
 import { Progresso } from "./components/Progresso.tsx";
+import { ProvedorDeAjuda } from "./components/AjudaIA.tsx";
 import {
   api, type Analise, type Passo, type PassoId, type RequisitoTema6,
 } from "./lib/api.ts";
@@ -65,6 +66,7 @@ export function App() {
   }
 
   return (
+    <ProvedorDeAjuda>
     <Shell etapa={etapa} liberadas={liberadas} onIr={setEtapa}>
       {erro && (
         <Alert className="mb-6" status="danger">
@@ -129,5 +131,6 @@ export function App() {
         indica evidência localizada no documento — nunca aprovação jurídica.
       </footer>
     </Shell>
+    </ProvedorDeAjuda>
   );
 }

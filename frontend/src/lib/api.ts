@@ -36,6 +36,8 @@ export interface RequisitoTema6 {
   descricao: string;
   fonte: string;
   comoComprovar: string;
+  /** Régua de ok/fraco/falta, transcrita do Guia do CNJ. */
+  regraOk: string;
 }
 
 export interface Fonte {
@@ -171,8 +173,37 @@ export const PASSOS_DA_ANALISE: { id: PassoId; titulo: string; enquanto: string 
   },
 ];
 
+/** Um ponto do sistema que usa — ou não usa — modelo de linguagem. */
+export interface PontoDeIA {
+  id: string;
+  titulo: string;
+  natureza: "ia" | "deterministico" | "modelo_local";
+  arquivo: string;
+  oQueFaz: string;
+  porQue: string;
+  entradas: string[];
+  sistema?: string;
+  template?: string;
+  versao?: string;
+  modelo?: string;
+  blocos?: { trecho: string; explicacao: string }[];
+  saida: string;
+  limites: string;
+}
+
 export const api = {
   analisar: (entrada: EntradaCaso) => post<Analise>("/analise", entrada),
+
+  /**
+   * Catálogo dos pontos de IA, para a ajuda contextual. É leitura de código:
+   * não chama modelo, não toca no caso, e por isso pode ser buscado uma vez e
+   * reusado em todas as telas.
+   */
+  pontosDeIA: async () => {
+    const r = await fetch("/api/prompts");
+    if (!r.ok) throw new Error("Falha ao carregar o catálogo de prompts");
+    return (await r.json()) as { iaDisponivel: boolean; pontos: PontoDeIA[] };
+  },
 
   /**
    * Mesma análise, recebendo o progresso enquanto acontece. Usa fetch com
