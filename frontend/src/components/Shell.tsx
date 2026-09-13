@@ -1,10 +1,13 @@
 import type { ReactNode } from "react";
 import {
-  IconeAchados, IconeBalanca, IconeConferencia, IconeDossie, IconeUpload,
+  IconeAchados, IconeBalanca, IconeConferencia, IconeDossie, IconeInfo, IconeUpload,
 } from "./Icones.tsx";
 
-/** "painel" é a tela inicial; as outras quatro são as etapas numeradas da análise. */
-export type EtapaId = "painel" | "documentos" | "conferencia" | "achados" | "dossie";
+/**
+ * "painel" é a tela inicial e "sobre" explica o projeto; as outras quatro são
+ * as etapas numeradas da análise.
+ */
+export type EtapaId = "painel" | "sobre" | "documentos" | "conferencia" | "achados" | "dossie";
 
 export const ETAPAS = [
   { id: "documentos", rotulo: "Documentos", resumo: "Peças do caso", Icone: IconeUpload },
@@ -103,13 +106,25 @@ export function Shell({ etapa, liberadas, onIr, children }: Props) {
           })}
         </ol>
 
-        <p className="mt-auto hidden px-3 pt-6 text-[0.6875rem] leading-relaxed text-muted lg:block">
-          <strong className="mb-1 block text-xs text-foreground">
-            Ferramenta de apoio à triagem
-          </strong>
-          As saídas são minutas revisáveis e não substituem a conferência do
-          advogado responsável.
-        </p>
+        {/* No rodapé da lateral: explica o projeto. O aviso de ferramenta de
+            apoio segue no rodapé de toda tela e dentro desta página. */}
+        <button
+          aria-current={etapa === "sobre" ? "page" : undefined}
+          className={`mt-3 flex items-center gap-2.5 rounded-[0.5625rem] px-3 py-2 text-left transition-colors lg:mt-auto lg:rounded-[0.8125rem] lg:py-3
+            ${etapa === "sobre"
+              ? "gradiente-acao shadow-[0_5px_16px_rgba(0,165,99,0.13)]"
+              : "hover:bg-[var(--sidebar-hover)]"}`}
+          type="button"
+          onClick={() => onIr("sobre")}
+        >
+          <IconeInfo className="size-[1.0625rem] shrink-0 lg:size-5" />
+          <span className="min-w-0">
+            <span className="fonte-display block text-xs font-bold lg:text-sm">Sobre nós</span>
+            <span className="hidden text-[0.6875rem] leading-snug text-[#40554a] lg:block">
+              Como o projeto funciona
+            </span>
+          </span>
+        </button>
       </aside>
 
       <main className="mx-auto w-full max-w-[77.5rem] px-4 pb-6 lg:px-9 lg:pb-8" id="conteudo">

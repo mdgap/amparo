@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Spinner } from "@heroui/react";
 import { Shell, type EtapaId } from "./components/Shell.tsx";
 import { Painel } from "./etapas/Painel.tsx";
+import { Sobre } from "./etapas/Sobre.tsx";
 import { Documentos } from "./etapas/Documentos.tsx";
 import { Conferencia } from "./etapas/Conferencia.tsx";
 import { Achados } from "./etapas/Achados.tsx";
@@ -36,7 +37,7 @@ export function App() {
     api.requisitos().then((r) => setCatalogo(r.requisitos)).catch(() => {});
   }, []);
 
-  const liberadas = new Set<EtapaId>(["painel", "documentos"]);
+  const liberadas = new Set<EtapaId>(["painel", "sobre", "documentos"]);
   if (documentos.laudo.trim() || documentos.requerimentoAdministrativo.trim()) {
     liberadas.add("conferencia");
   }
@@ -162,6 +163,8 @@ export function App() {
           onNovoCaso={novoCaso}
         />
       )}
+
+      {etapa === "sobre" && <Sobre onNovoCaso={novoCaso} />}
 
       {etapa === "documentos" && (
         <Documentos
