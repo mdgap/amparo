@@ -180,7 +180,11 @@ export function Conferencia({
           </div>
         </section>
 
-        <SituacaoProcessual dados={processuais} onMudar={onMudarProcessuais} />
+        <SituacaoProcessual
+          dados={processuais}
+          medicamento={medicamento.nome}
+          onMudar={onMudarProcessuais}
+        />
         </div>
 
         <section className="cartao p-[1.375rem]">
@@ -487,12 +491,47 @@ function BuscaCmed({
  */
 function SituacaoProcessual({
   dados,
+  medicamento,
   onMudar,
 }: {
   dados: DadosProcessuais;
+  medicamento: string;
   onMudar: (d: DadosProcessuais) => void;
 }) {
   const { conitec, hipossuficiencia } = dados;
+  const [consultando, setConsultando] = useState(false);
+  const [registros, setRegistros] = useState<Awaited<ReturnType<typeof api.conitec>> | null>(null);
+  const [erroConsulta, setErroConsulta] = useState<string | null>(null);
+
+  /**
+   * Consulta o painel da CONITEC e PROPÕE a situação — não decide. O mesmo
+   * princípio ativo aparece várias vezes, com decisões opostas em anos
+   * diferentes; qual delas vale depende da indicação clínica do caso.
+   */
+  async function consultar() {
+    const termo = medicamento.split(/[\s—-]/).find((p) => p.length >= 4) ?? medicamento;
+    setConsultando(true);
+    setErroConsulta(null);
+    try {
+      setRegistros(await api.conitec(termo.trim()));
+    } catch (e) {
+      setErroConsulta(e instanceof Error ? e.message : "Falha na consulta.");
+    } finally {
+      setConsultando(false);
+    }
+  }
+
+  function aplicar(r: NonNullable<typeof registros>["registros"][number]) {
+    const data = r.situacaoSugerida === "desfavoravel" ? r.data_decisao : r.data_protocolo;
+    onMudar({
+      ...dados,
+      conitec: {
+        ...conitec,
+        situacao: r.situacaoSugerida === "nao_informado" ? conitec.situacao : r.situacaoSugerida,
+        desde: data ? data.slice(0, 10) : "",
+      },
+    });
+  }
 
   return (
     <section className="cartao p-[1.375rem]">
@@ -510,6 +549,59 @@ function SituacaoProcessual({
       </p>
 
       <div className="flex flex-col gap-5">
+        {medicamento.trim().length >= 4 && (
+          <div className="rounded-[0.5625rem] border border-[var(--border)] bg-[var(--surface-secondary)] p-3">
+            <Button
+              className="controle w-full"
+              isPending={consultando}
+              size="sm"
+              variant="secondary"
+              onPress={() => void consultar()}
+            >
+              {consultando ? <Spinner size="sm" /> : null}
+              Consultar no painel da CONITEC
+            </Button>
+
+            {erroConsulta && (
+              <p className="mt-2 text-xs text-[var(--status-erro-fg)]">{erroConsulta}</p>
+            )}
+
+            {registros?.nuncaDemandado && (
+              <p className="mt-2 text-xs text-[var(--status-ok-fg)]">
+                Não consta do painel de tecnologias demandadas. Isso indica que
+                nunca houve pedido de incorporação — confira e marque abaixo.
+              </p>
+            )}
+
+            {registros && registros.registros.length > 0 && (
+              <>
+                <p className="mt-3 text-xs text-muted">
+                  {registros.registros.length} registro(s) no painel de{" "}
+                  {registros.painelVersao}. O mesmo princípio ativo aparece mais
+                  de uma vez: escolha o que corresponde à indicação do caso.
+                </p>
+                <ul className="mt-2 flex max-h-52 flex-col gap-2 overflow-y-auto">
+                  {registros.registros.map((r, i) => (
+                    <li key={`${r.tecnologia}-${i}`}>
+                      <button
+                        className="w-full rounded-[0.5625rem] border border-[var(--border)] bg-surface px-3 py-2 text-start text-xs hover:bg-[var(--surface-tertiary)]"
+                        type="button"
+                        onClick={() => aplicar(r)}
+                      >
+                        <span className="block font-medium">{r.tecnologia}</span>
+                        <span className="block text-muted">{r.status}</span>
+                        {r.indicacao && (
+                          <span className="mt-1 block text-muted">{r.indicacao}</span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        )}
+
         <div>
           <label
             className="mb-2 block text-[0.8125rem] text-[#294b36]"

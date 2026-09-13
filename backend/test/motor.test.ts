@@ -5,7 +5,9 @@ import { definirRota } from "../src/domain/rota.ts";
 import { resumirTema6, REQUISITOS_TEMA_6 } from "../src/domain/tema6.ts";
 import { semMarkdown, semNulos } from "../src/llm/tolerante.ts";
 import { classificarPdf } from "../src/documentos/pdf.ts";
-import { avaliarConitec, avaliarHipossuficiencia } from "../src/domain/formulario.ts";
+import {
+  avaliarConitec, avaliarHipossuficiencia, situacaoDoStatusConitec,
+} from "../src/domain/formulario.ts";
 import {
   extrairPosologia, precoCmed, reconhecerMedicamentos, unidadesDaApresentacao,
   versaoDaTabela,
@@ -502,4 +504,22 @@ test("resposta do modelo sem avaliações não derruba a análise", () => {
   assert.equal(comFormulario.ok, 2);
   assert.equal(comFormulario.naoAvaliados, 4);
   assert.equal(comFormulario.aptoParaProtocolo, false);
+});
+
+test("status do painel da CONITEC vira hipótese do requisito", () => {
+  assert.equal(situacaoDoStatusConitec("Em análise"), "em_analise");
+  assert.equal(situacaoDoStatusConitec("Em análise após consulta pública"), "em_analise");
+  assert.equal(
+    situacaoDoStatusConitec("Processo encerrado: decisão de não incorporação no SUS"),
+    "desfavoravel",
+  );
+  assert.equal(
+    situacaoDoStatusConitec("Processo encerrado: decisão de exclusão do SUS"),
+    "desfavoravel",
+  );
+  // Incorporado não é hipótese do requisito: fica para conferência humana.
+  assert.equal(
+    situacaoDoStatusConitec("Processo encerrado: decisão de incorporação no SUS"),
+    "nao_informado",
+  );
 });
