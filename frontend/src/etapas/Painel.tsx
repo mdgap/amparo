@@ -85,21 +85,21 @@ export function Painel({ catalogo, abrindo, onAbrir, onNovoCaso }: Props) {
 
   return (
     <>
-      <div className="flex flex-wrap items-end justify-between gap-x-6">
-        <Cabecalho
-          descricao="Métricas dos últimos movimentos e o histórico das análises. Nada aqui identifica paciente: cada caso aparece pelo código, pelo medicamento e pela data."
-          passo="Painel"
-          secao={null}
-          titulo="Casos analisados"
-        />
-        {/* No estado vazio a ação principal fica no convite, não duplicada aqui. */}
-        {!vazio && (
-          <Button className="controle mb-6" onPress={onNovoCaso}>
-            Novo caso
-            <IconeSeta className="size-5" />
-          </Button>
-        )}
-      </div>
+      <Cabecalho
+        acao={
+          // No estado vazio a ação principal fica no convite, não duplicada aqui.
+          !vazio && (
+            <Button className="controle" onPress={onNovoCaso}>
+              Novo caso
+              <IconeSeta className="size-5" />
+            </Button>
+          )
+        }
+        descricao="Métricas dos últimos movimentos e o histórico das análises. Nada aqui identifica paciente: cada caso aparece pelo código, pelo medicamento e pela data."
+        passo="Painel"
+        secao={null}
+        titulo="Casos analisados"
+      />
 
       {situacao === "indisponivel" && (
         <Alert className="mb-6" status="warning">
