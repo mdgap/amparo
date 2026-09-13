@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import {
-  IconeAchados, IconeConferencia, IconeDossie, IconeUpload,
+  IconeAchados, IconeBalanca, IconeConferencia, IconeDossie, IconeUpload,
 } from "./Icones.tsx";
 
-export type EtapaId = "documentos" | "conferencia" | "achados" | "dossie";
+/** "painel" é a tela inicial; as outras quatro são as etapas numeradas da análise. */
+export type EtapaId = "painel" | "documentos" | "conferencia" | "achados" | "dossie";
 
 export const ETAPAS = [
   { id: "documentos", rotulo: "Documentos", resumo: "Peças do caso", Icone: IconeUpload },
@@ -50,7 +51,20 @@ export function Shell({ etapa, liberadas, onIr, children }: Props) {
           </span>
         </div>
 
-        <p className="sidebar-rotulo mt-10 hidden px-3 text-[0.625rem] font-bold tracking-[0.1rem] text-muted lg:block">
+        <button
+          aria-current={etapa === "painel" ? "page" : undefined}
+          className={`mt-4 flex items-center gap-2.5 rounded-[0.5625rem] px-3 py-2 text-left transition-colors lg:mt-8 lg:min-h-[3rem] lg:rounded-[0.8125rem]
+            ${etapa === "painel"
+              ? "gradiente-acao shadow-[0_5px_16px_rgba(0,165,99,0.13)]"
+              : "hover:bg-[var(--sidebar-hover)]"}`}
+          type="button"
+          onClick={() => onIr("painel")}
+        >
+          <IconeBalanca className="size-[1.0625rem] shrink-0 lg:size-5" />
+          <span className="fonte-display text-xs font-bold lg:text-sm">Painel de casos</span>
+        </button>
+
+        <p className="sidebar-rotulo mt-8 hidden px-3 text-[0.625rem] font-bold tracking-[0.1rem] text-muted lg:block">
           ANÁLISE DO CASO
         </p>
 

@@ -19,6 +19,7 @@ export interface Repositorio {
   gravarAnalise(registro: RegistroAnalise): Promise<void>;
   listarAnalises(filtro: { limite: number; antesDe?: number }): Promise<LinhaAnalise[]>;
   linhasParaMetricas(): Promise<LinhaAnalise[]>;
+  buscarAnalise(id: number): Promise<LinhaAnalise | null>;
 }
 
 export interface IA {

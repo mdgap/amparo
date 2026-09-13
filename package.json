@@ -21,6 +21,7 @@
     "db:ingest": "npm run db:ingest --workspace=backend",
     "typecheck": "npm run typecheck --workspace=backend",
     "db:cmed": "npm run db:cmed --workspace=backend",
-    "db:conitec": "npm run db:conitec --workspace=backend"
+    "db:conitec": "npm run db:conitec --workspace=backend",
+    "db:demo": "npm run db:demo --workspace=backend"
   }
 }

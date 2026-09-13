@@ -4,7 +4,7 @@ import type { LinhaAnalise } from "./domain/historico.ts";
 import { PARAMETROS } from "./domain/parametros.ts";
 import { PROMPT_VERSAO } from "./llm/prompts/sistema.ts";
 
-const COLUNAS = "id, criado_em, entrada, rota, tema6, dossie";
+const COLUNAS = "id, criado_em, parametros_versao, entrada, rota, tema6, dossie";
 
 /** Janela das métricas: as análises mais recentes, não a tabela inteira. */
 const JANELA_METRICAS = 1000;
@@ -38,5 +38,10 @@ export const repositorioPostgres: Repositorio = {
       `SELECT ${COLUNAS} FROM analise ORDER BY id DESC LIMIT $1`,
       [JANELA_METRICAS],
     );
+  },
+
+  async buscarAnalise(id) {
+    const [linha] = await query<LinhaAnalise>(`SELECT ${COLUNAS} FROM analise WHERE id = $1`, [id]);
+    return linha ?? null;
   },
 };

@@ -32,6 +32,9 @@ function repositorioFake(linhas: LinhaAnalise[] = []) {
     async linhasParaMetricas() {
       return linhas;
     },
+    async buscarAnalise(id: number) {
+      return linhas.find((l) => Number(l.id) === id) ?? null;
+    },
   };
 }
 
@@ -43,6 +46,9 @@ const bancoForaDoAr = {
     throw new Error("connect ECONNREFUSED");
   },
   async linhasParaMetricas(): Promise<LinhaAnalise[]> {
+    throw new Error("connect ECONNREFUSED");
+  },
+  async buscarAnalise(): Promise<LinhaAnalise | null> {
     throw new Error("connect ECONNREFUSED");
   },
 };

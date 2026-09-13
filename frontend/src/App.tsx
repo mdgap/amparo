@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Spinner } from "@heroui/react";
 import { Shell, type EtapaId } from "./components/Shell.tsx";
+import { Painel } from "./etapas/Painel.tsx";
 import { Documentos } from "./etapas/Documentos.tsx";
 import { Conferencia } from "./etapas/Conferencia.tsx";
 import { Achados } from "./etapas/Achados.tsx";
@@ -10,13 +11,14 @@ import { ProvedorDeAjuda } from "./components/AjudaIA.tsx";
 import {
   api, type Analise, type Passo, type PassoId, type RequisitoTema6,
 } from "./lib/api.ts";
+import { historicoApi } from "./lib/historico.ts";
 import {
   CASO_EXEMPLO, DOCUMENTOS_VAZIOS, MEDICAMENTO_VAZIO, PROCESSUAIS_VAZIOS,
   type DadosMedicamento, type DadosProcessuais, type Documentos as Docs,
 } from "./lib/caso.ts";
 
 export function App() {
-  const [etapa, setEtapa] = useState<EtapaId>("documentos");
+  const [etapa, setEtapa] = useState<EtapaId>("painel");
   const [documentos, setDocumentos] = useState<Docs>(DOCUMENTOS_VAZIOS);
   const [medicamento, setMedicamento] = useState<DadosMedicamento>(MEDICAMENTO_VAZIO);
   const [processuais, setProcessuais] = useState<DadosProcessuais>(PROCESSUAIS_VAZIOS);
@@ -24,18 +26,56 @@ export function App() {
   const [analise, setAnalise] = useState<Analise | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [passos, setPassos] = useState<Map<PassoId, Passo>>(new Map());
-  const [erro, setErro] = useState<string | null>(null);
+  const [erro, setErro] = useState<{ titulo: string; mensagem: string } | null>(null);
+  /** Id da análise do histórico que está sendo reaberta. */
+  const [abrindo, setAbrindo] = useState<number | null>(null);
+  /** Preenchido quando a análise na tela veio do histórico, não de uma leitura agora. */
+  const [reaberta, setReaberta] = useState<{ codigo: string; criadoEm: string } | null>(null);
 
   useEffect(() => {
     api.requisitos().then((r) => setCatalogo(r.requisitos)).catch(() => {});
   }, []);
 
-  const liberadas = new Set<EtapaId>(["documentos"]);
+  const liberadas = new Set<EtapaId>(["painel", "documentos"]);
   if (documentos.laudo.trim() || documentos.requerimentoAdministrativo.trim()) {
     liberadas.add("conferencia");
   }
   if (analise) liberadas.add("achados");
   if (analise?.dossie) liberadas.add("dossie");
+
+  function limparCaso() {
+    setDocumentos(DOCUMENTOS_VAZIOS);
+    setMedicamento(MEDICAMENTO_VAZIO);
+    setProcessuais(PROCESSUAIS_VAZIOS);
+    setAnalise(null);
+    setReaberta(null);
+    setPassos(new Map());
+    setErro(null);
+  }
+
+  function novoCaso() {
+    limparCaso();
+    setEtapa("documentos");
+  }
+
+  async function abrir(id: number) {
+    setAbrindo(id);
+    setErro(null);
+    try {
+      const salva = await historicoApi.analise(id);
+      limparCaso();
+      setAnalise(salva);
+      setReaberta({ codigo: salva.codigo, criadoEm: salva.criadoEm });
+      setEtapa("achados");
+    } catch (e) {
+      setErro({
+        titulo: "Não foi possível abrir a análise",
+        mensagem: e instanceof Error ? e.message : "Falha inesperada ao ler o histórico.",
+      });
+    } finally {
+      setAbrindo(null);
+    }
+  }
 
   async function analisar() {
     setCarregando(true);
@@ -64,9 +104,13 @@ export function App() {
         hipossuficiencia: processuais.hipossuficiencia,
       }, (passo) => setPassos((atual) => new Map(atual).set(passo.id, passo)));
       setAnalise(resultado);
+      setReaberta(null);
       setEtapa("achados");
     } catch (e) {
-      setErro(e instanceof Error ? e.message : "Falha inesperada na análise.");
+      setErro({
+        titulo: "Não foi possível concluir a análise",
+        mensagem: e instanceof Error ? e.message : "Falha inesperada na análise.",
+      });
     } finally {
       setCarregando(false);
     }
@@ -79,8 +123,8 @@ export function App() {
         <Alert className="mb-6" status="danger">
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>Não foi possível concluir a análise</Alert.Title>
-            <Alert.Description>{erro}</Alert.Description>
+            <Alert.Title>{erro.titulo}</Alert.Title>
+            <Alert.Description>{erro.mensagem}</Alert.Description>
           </Alert.Content>
         </Alert>
       )}
@@ -89,6 +133,34 @@ export function App() {
         <div aria-live="polite" className="mb-6">
           <Progresso passos={passos} />
         </div>
+      )}
+
+      {reaberta && (etapa === "achados" || etapa === "dossie") && (
+        <Alert className="mb-6" status="accent">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>{reaberta.codigo}, reaberto do histórico</Alert.Title>
+            <Alert.Description>
+              Análise de{" "}
+              {new Date(reaberta.criadoEm).toLocaleDateString("pt-BR", {
+                day: "2-digit", month: "long", year: "numeric",
+              })}
+              . Os documentos e os trechos citados não são guardados, por
+              privacidade: os achados mostram a situação de cada requisito, e o
+              dossiê está como foi redigido. Para ler os documentos de novo,
+              comece um caso novo.
+            </Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
+
+      {etapa === "painel" && (
+        <Painel
+          abrindo={abrindo}
+          catalogo={catalogo}
+          onAbrir={(id) => void abrir(id)}
+          onNovoCaso={novoCaso}
+        />
       )}
 
       {etapa === "documentos" && (
@@ -122,7 +194,7 @@ export function App() {
           catalogo={catalogo}
           documentos={documentos}
           onVerDossie={() => setEtapa("dossie")}
-          onVoltar={() => setEtapa("conferencia")}
+          onVoltar={() => setEtapa(reaberta ? "painel" : "conferencia")}
         />
       )}
 
@@ -132,6 +204,12 @@ export function App() {
           dossie={analise.dossie}
           onVoltar={() => setEtapa("achados")}
         />
+      )}
+
+      {abrindo !== null && (
+        <p aria-live="polite" className="sr-only">
+          Abrindo a análise…
+        </p>
       )}
 
       <footer className="mt-10 border-t border-[var(--border)] pt-6 text-sm text-muted">

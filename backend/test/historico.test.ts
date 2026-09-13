@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   calcularMetricas,
+  codigoDoCaso,
   montarRegistro,
   resumirParaHistorico,
   type LinhaAnalise,
@@ -107,6 +108,12 @@ test("dossiê vai para o banco sem o prompt, que carrega o texto do documento", 
   assert.deepEqual(registro.dossie, { memorando: "minuta" });
 });
 
+test("código do caso é curto, sai do id e não aceita texto livre", () => {
+  assert.equal(codigoDoCaso(7), "Caso 0007");
+  assert.equal(codigoDoCaso("42"), "Caso 0042");
+  assert.equal(codigoDoCaso(12345), "Caso 12345");
+});
+
 test("item do histórico resume a análise para a lista", () => {
   const rota = definirRota(comCustoAnual(400000), posologia);
   const item = resumirParaHistorico(
@@ -115,6 +122,7 @@ test("item do histórico resume a análise para a lista", () => {
 
   assert.deepEqual(item, {
     id: 7,
+    codigo: "Caso 0007",
     criadoEm: "2026-09-07T00:00:00.000Z",
     medicamento: "Trikafta",
     custoAnual: 400000,

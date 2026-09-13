@@ -48,10 +48,12 @@ export interface LinhaAnalise extends RegistroAnalise {
   /** O pg devolve BIGSERIAL como string. */
   id: string | number;
   criado_em: Date | string;
+  parametros_versao?: string;
 }
 
 export interface ItemHistorico {
   id: number;
+  codigo: string;
   criadoEm: string;
   medicamento: string;
   custoAnual: number;
@@ -62,6 +64,24 @@ export interface ItemHistorico {
   aptoParaProtocolo: boolean | null;
   /** false quando só o motor rodou (sem chave de IA). */
   comIA: boolean;
+}
+
+/** A análise salva no formato que a tela de achados e o dossiê já sabem ler. */
+export interface AnaliseReaberta {
+  id: number;
+  codigo: string;
+  criadoEm: string;
+  reaberta: true;
+  entrada: EntradaPersistida;
+  rota: ResultadoRota;
+  tema6: {
+    avaliacoes: (Pick<AvaliacaoRequisito, "id" | "status" | "justificativa" | "evidencias">)[];
+    resumo: ResumoTema6;
+    fontes: never[];
+  } | null;
+  dossie: unknown;
+  aviso?: string;
+  parametrosVersao: string;
 }
 
 export interface Metricas {
@@ -132,10 +152,20 @@ function semPrompt(dossie: unknown): unknown {
   return resto;
 }
 
+/**
+ * Código curto do caso, gerado do id. É o que o advogado usa para reconhecer
+ * o caso no painel: não existe campo livre de apelido, que seria o lugar mais
+ * fácil de alguém digitar o nome do paciente.
+ */
+export function codigoDoCaso(id: number | string): string {
+  return `Caso ${String(Number(id)).padStart(4, "0")}`;
+}
+
 export function resumirParaHistorico(linha: LinhaAnalise): ItemHistorico {
   const { tema6 } = linha;
   return {
     id: Number(linha.id),
+    codigo: codigoDoCaso(linha.id),
     criadoEm: new Date(linha.criado_em).toISOString(),
     medicamento: linha.entrada.medicamento.nome,
     custoAnual: linha.rota.custo.custoAnual,
@@ -145,6 +175,27 @@ export function resumirParaHistorico(linha: LinhaAnalise): ItemHistorico {
     placar: tema6 ? { ok: tema6.resumo.ok, total: tema6.resumo.total } : null,
     aptoParaProtocolo: tema6 ? tema6.resumo.aptoParaProtocolo : null,
     comIA: tema6 !== null,
+  };
+}
+
+export function reabrirAnalise(linha: LinhaAnalise): AnaliseReaberta {
+  const { tema6 } = linha;
+  return {
+    id: Number(linha.id),
+    codigo: codigoDoCaso(linha.id),
+    criadoEm: new Date(linha.criado_em).toISOString(),
+    reaberta: true,
+    entrada: linha.entrada,
+    rota: linha.rota,
+    // Evidência e justificativa não são guardadas: a tela recebe vazio, não inventado.
+    tema6: tema6 && {
+      avaliacoes: tema6.avaliacoes.map(({ id, status }) => ({ id, status, justificativa: "", evidencias: [] })),
+      resumo: { ...tema6.resumo, pendencias: [] },
+      fontes: [],
+    },
+    dossie: linha.dossie ?? null,
+    aviso: tema6 ? undefined : "Análise feita só pelo motor de regras, sem a leitura dos documentos pela IA.",
+    parametrosVersao: linha.parametros_versao ?? "",
   };
 }
 
