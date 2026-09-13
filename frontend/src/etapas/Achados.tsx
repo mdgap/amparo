@@ -126,7 +126,8 @@ export function Achados({ analise, catalogo, documentos, onVoltar, onVerDossie }
                     }
                     evidencias={av?.evidencias ?? []}
                     fonte={req.fonte}
-                    resumo={av?.justificativa ?? req.descricao}
+                    // Análise reaberta do histórico não guarda justificativa: cai na descrição.
+                    resumo={av?.justificativa || req.descricao}
                     status={av?.status ?? "nao_avaliado"}
                     titulo={req.titulo}
                   />
