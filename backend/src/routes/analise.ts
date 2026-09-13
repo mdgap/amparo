@@ -4,7 +4,12 @@ import type { IA, Repositorio } from "../app.ts";
 import type { anonimizarVarios } from "../documentos/anonimizar.ts";
 import { montarRegistro, type RegistroAnalise } from "../domain/historico.ts";
 import { definirRota } from "../domain/rota.ts";
-import { resumirTema6, REQUISITOS_TEMA_6 } from "../domain/tema6.ts";
+import {
+  avaliacoesSemRegistroAnvisa,
+  consolidarAvaliacoes,
+  resumirTema6,
+  REQUISITOS_TEMA_6,
+} from "../domain/tema6.ts";
 import { PARAMETROS } from "../domain/parametros.ts";
 import { PROMPT_VERSAO } from "../llm/prompts/sistema.ts";
 import { env } from "../env.ts";
@@ -139,25 +144,43 @@ export async function rotasDeAnalise(app: FastifyInstance, { repositorio, ia, an
     });
 
     aviso({ id: "tema6", estado: "fazendo" });
-    const { avaliacoes, alertaENatJus, fontes, prompt: promptTema6 } = await ia.analisarTema6({
-      ...anonimizados,
-      medicamento: medicamento.nome,
-    });
+
+    // O Tema 6 pressupõe registro na ANVISA. Sem registro o teste é o do Tema
+    // 500, e rodar os seis requisitos aqui daria ao advogado o checklist
+    // errado — a rota já aponta os três requisitos que o caso exige.
+    const semRegistroAnvisa = medicamento.registroAnvisa?.possui === false;
+
+    const leitura = semRegistroAnvisa
+      ? {
+          avaliacoes: avaliacoesSemRegistroAnvisa(),
+          alertaENatJus: undefined,
+          fontes: [],
+          prompt: undefined,
+        }
+      : await ia.analisarTema6({ ...anonimizados, medicamento: medicamento.nome });
+
+    const { avaliacoes, alertaENatJus, fontes, prompt: promptTema6 } = leitura;
     aviso({
       id: "tema6",
       estado: "feito",
-      detalhe: `${fontes.length} trecho(s) do corpus citados · ${avaliacoes.length} requisito(s) avaliados`,
+      detalhe: semRegistroAnvisa
+        ? "Medicamento sem registro na ANVISA: o teste do Tema 6 não se aplica, o caso segue o Tema 500. A leitura por IA não foi executada."
+        : `${fontes.length} trecho(s) do corpus citados · ${avaliacoes.length} requisito(s) avaliados`,
     });
 
     aviso({ id: "placar", estado: "fazendo" });
 
     // Dois dos seis requisitos vêm da conferência e são apurados em código —
     // prazo da CONITEC por data, hipossuficiência por documento informado.
-    const doFormulario = [
-      avaliarConitec(dados.conitec),
-      avaliarHipossuficiencia(dados.hipossuficiencia),
-    ];
-    const resumo = resumirTema6([...avaliacoes, ...doFormulario]);
+    // Fora do Tema 6 nenhum dos seis vale: apurar só dois daria um placar
+    // parcial de um teste que não é o do caso.
+    const doFormulario = semRegistroAnvisa
+      ? []
+      : [avaliarConitec(dados.conitec), avaliarHipossuficiencia(dados.hipossuficiencia)];
+    // Placar e dossiê falam do MESMO conjunto: os seis na ordem canônica,
+    // com os não avaliados presentes em vez de ausentes.
+    const avaliadas = consolidarAvaliacoes([...avaliacoes, ...doFormulario]);
+    const resumo = resumirTema6(avaliadas);
     aviso({
       id: "placar",
       estado: "feito",
@@ -166,12 +189,17 @@ export async function rotasDeAnalise(app: FastifyInstance, { repositorio, ia, an
 
     aviso({ id: "dossie", estado: "fazendo" });
     const dossie = await ia.redigirDossie({
-      rota, resumo, medicamento: medicamento.nome, alertaENatJus, fontes,
+      rota,
+      resumo,
+      avaliacoes: avaliadas,
+      medicamento: medicamento.nome,
+      alertaENatJus,
+      fontes,
     });
     aviso({ id: "dossie", estado: "feito", detalhe: "Cinco peças redigidas" });
 
     const tema6 = {
-      avaliacoes: [...avaliacoes, ...doFormulario],
+      avaliacoes: avaliadas,
       resumo,
       alertaENatJus,
       fontes,
@@ -191,11 +219,16 @@ export async function rotasDeAnalise(app: FastifyInstance, { repositorio, ia, an
       temperatura: 0,
       zeroDataRetention: true,
       etapas: [
-        {
-          id: "tema6",
-          titulo: "Classificação dos seis requisitos do Tema 6",
-          ...promptTema6,
-        },
+        // Sem registro na ANVISA a leitura não roda, e não há prompt a exibir.
+        ...(promptTema6
+          ? [
+              {
+                id: "tema6",
+                titulo: "Classificação dos seis requisitos do Tema 6",
+                ...promptTema6,
+              },
+            ]
+          : []),
         {
           id: "dossie",
           titulo: "Redação das cinco peças do dossiê",

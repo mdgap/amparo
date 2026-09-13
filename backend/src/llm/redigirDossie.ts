@@ -3,7 +3,9 @@ import { pedirJSON } from "./cliente.ts";
 import { listaDeTextos, semMarkdown } from "./tolerante.ts";
 import { SISTEMA } from "./prompts/sistema.ts";
 import { montarContexto, type TrechoEncontrado } from "../rag/busca.ts";
-import type { ResultadoRota } from "../domain/types.ts";
+import { orgaoAdministrativo } from "../domain/rota.ts";
+import { REQUISITOS_TEMA_6 } from "../domain/tema6.ts";
+import type { AvaliacaoRequisito, ResultadoRota } from "../domain/types.ts";
 import type { ResumoTema6 } from "../domain/tema6.ts";
 
 const schema = z.object({
@@ -33,6 +35,24 @@ export function montarPromptDossie(
   contexto: string,
 ): string {
   const { rota, resumo } = args;
+
+  // Sem isto, a tarefa 3 pede "requisito a requisito" e o modelo só tem o
+  // placar somado — teria de inventar o que cada documento prova.
+  const porRequisito = args.avaliacoes
+    .map((a) => {
+      const req = REQUISITOS_TEMA_6.find((r) => r.id === a.id);
+      const linhas = [`- ${req?.titulo ?? a.id} (${a.id}): ${a.status}`];
+      if (a.justificativa) linhas.push(`  Justificativa: ${a.justificativa}`);
+      if (a.evidencias.length) {
+        linhas.push(
+          `  Evidência literal no documento: ${a.evidencias.map((e) => `"${e}"`).join(" | ")}`,
+        );
+      }
+      if (a.pendencia) linhas.push(`  Pendência: ${a.pendencia}`);
+      return linhas.join("\n");
+    })
+    .join("\n");
+
   const prompt = `CONTEXTO NORMATIVO (cite como [F1], [F2]...):
 ${contexto}
 
@@ -50,10 +70,13 @@ SITUAÇÃO DO TEMA 6: ${resumo.ok} de ${resumo.total} requisitos ok, ${resumo.fr
 Pendências apuradas: ${resumo.pendencias.join(" | ") || "nenhuma"}
 ${args.alertaENatJus ? `Alerta e-NatJus: ${args.alertaENatJus}` : ""}
 
+AVALIAÇÃO REQUISITO A REQUISITO — já feita na etapa anterior, não reavalie:
+${porRequisito || "(nenhum requisito avaliado)"}
+
 TAREFA — produza cinco peças:
 1. memorandoDeRota: memorando interno explicando foro, polo passivo e a memória de cálculo, com as fontes citadas.
-2. requerimentoAdministrativo: minuta de requerimento à secretaria de saúde, pronta para preencher os dados do paciente (use [NOME], [CPF], [ENDEREÇO] como lacunas).
-3. resumoDeEvidencia: o que os documentos do caso já provam, requisito a requisito.
+2. requerimentoAdministrativo: minuta de requerimento dirigida a ${orgaoAdministrativo(rota.poloPassivo)}, pronta para preencher os dados do paciente (use [NOME], [CPF], [ENDEREÇO] como lacunas). Endereçar a ente diverso do polo passivo não produz a negativa que o requisito 1 exige.
+3. resumoDeEvidencia: o que os documentos do caso já provam, requisito a requisito, usando EXATAMENTE os status, as justificativas e as evidências do bloco acima. Não atribua a um requisito prova que não esteja listada ali, e não altere o status de nenhum.
 4. pendenciasDoCliente: lista objetiva do que pedir ao cliente, em ordem de urgência.
 5. trechoDePeticao: trecho de petição sobre competência e cabimento — apenas essa parte, não a petição inteira.
 
@@ -67,6 +90,8 @@ Responda SOMENTE com JSON: {"memorandoDeRota","requerimentoAdministrativo","resu
 export async function redigirDossie(args: {
   rota: ResultadoRota;
   resumo: ResumoTema6;
+  /** A avaliação de cada requisito, como saiu da etapa anterior. */
+  avaliacoes: AvaliacaoRequisito[];
   medicamento: string;
   alertaENatJus?: string;
   fontes: TrechoEncontrado[];

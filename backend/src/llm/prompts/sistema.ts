@@ -1,7 +1,7 @@
 /**
  * Prompt de sistema versionado — a versão vai no dossiê para rastreabilidade.
  */
-export const PROMPT_VERSAO = "2026-09-12.2";
+export const PROMPT_VERSAO = "2026-09-13.1";
 
 export const SISTEMA = `Você assiste advogados, defensores públicos e estagiários na triagem de pedidos de medicamento contra o SUS no Brasil.
 

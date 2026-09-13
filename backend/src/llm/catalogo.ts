@@ -97,6 +97,15 @@ const templateDossie = () =>
         aptoParaProtocolo: false,
         pendencias: ["{{PENDÊNCIAS APURADAS EM CÓDIGO}}"],
       },
+      avaliacoes: [
+        {
+          id: "{{ID DO REQUISITO}}",
+          status: "{{STATUS APURADO NA ETAPA ANTERIOR}}" as never,
+          justificativa: "{{JUSTIFICATIVA DA ETAPA ANTERIOR}}",
+          evidencias: ["{{TRECHO LITERAL DO DOCUMENTO}}"],
+          pendencia: "{{PENDÊNCIA, QUANDO O STATUS NÃO FOR OK}}",
+        },
+      ],
       medicamento: "{{NOME DO MEDICAMENTO}}",
       alertaENatJus: "{{ALERTA DO e-NatJus, SE HOUVER}}",
       fontes: [],
@@ -167,6 +176,7 @@ export function catalogoDePontos(): PontoDeIA[] {
         "Rota calculada pelo motor: justiça, polo passivo, custeio e fundamento",
         "Memória de cálculo, linha a linha",
         "Placar dos seis requisitos, somado em código",
+        "Avaliação de cada requisito, com status, justificativa e evidência literal",
         "Pendências apuradas em código",
         "Trechos do corpus normativo",
       ],
@@ -186,9 +196,14 @@ export function catalogoDePontos(): PontoDeIA[] {
             "O placar e as pendências vêm de resumirTema6, em código. O modelo recebe o resultado, não a conta.",
         },
         {
+          trecho: "AVALIAÇÃO REQUISITO A REQUISITO — já feita na etapa anterior, não reavalie",
+          explicacao:
+            "Status, justificativa e trecho literal de cada requisito, como saíram da etapa anterior. É o que sustenta o resumo de evidência: sem este bloco, a peça afirmaria requisito a requisito sem ter recebido os requisitos.",
+        },
+        {
           trecho: "TAREFA — produza cinco peças",
           explicacao:
-            "Define o que cada peça deve conter. O requerimento pede lacunas como [NOME] e [CPF] em vez de dado de paciente.",
+            "Define o que cada peça deve conter. O requerimento é endereçado ao órgão do polo passivo calculado pelo motor, porque a negativa exigida pelo requisito 1 tem de vir do ente que responde pelo fornecimento. As lacunas [NOME] e [CPF] entram no lugar do dado de paciente.",
         },
         {
           trecho: "IMPORTANTE: nem todos os requisitos estão cumpridos",

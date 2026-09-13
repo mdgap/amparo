@@ -95,6 +95,32 @@ export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
   },
 ];
 
+/**
+ * O Tema 6 alcança medicamento REGISTRADO na ANVISA: "é possível,
+ * excepcionalmente, a concessão judicial de medicamento registrado na ANVISA,
+ * mas não incorporado às listas". Sem registro, o teste é outro — os três
+ * requisitos do item 3 do Tema 500 — e rodar os seis daqui entregaria ao
+ * advogado o checklist do caso de outra pessoa.
+ *
+ * O requisito da CONITEC é o mais evidente: não há o que incorporar, porque o
+ * art. 19-T, II da Lei 8.080/1990 veda a dispensação no SUS de medicamento sem
+ * registro na ANVISA.
+ */
+export const PENDENCIA_TEMA_500 =
+  "Medicamento sem registro na ANVISA: o caso não segue o Tema 6. Comprove os três requisitos do Tema 500 — pedido de registro no Brasil (salvo órfãos e doenças raras), registro em agência de regulação estrangeira renomada e inexistência de substituto terapêutico registrado no Brasil —, além da mora irrazoável da ANVISA.";
+
+/** Os seis como "não avaliado", dizendo por quê. Não chama o modelo. */
+export function avaliacoesSemRegistroAnvisa(): AvaliacaoRequisito[] {
+  return REQUISITOS_TEMA_6.map((r) => ({
+    id: r.id,
+    status: "nao_avaliado" as const,
+    justificativa:
+      "Não avaliado: o Tema 6 alcança medicamento registrado na ANVISA. Sem registro, aplica-se o Tema 500.",
+    evidencias: [],
+    pendencia: PENDENCIA_TEMA_500,
+  }));
+}
+
 const PESO: Record<StatusRequisito, number> = {
   ok: 1,
   fraco: 0.5,
@@ -115,12 +141,22 @@ export interface ResumoTema6 {
   pendencias: string[];
 }
 
-/** Consolida as avaliações (vindas do LLM) sem deixar o modelo decidir o placar. */
-export function resumirTema6(
+/**
+ * Os seis na ordem canônica: o que o modelo e o formulário devolveram, e
+ * "não avaliado" para o que ninguém respondeu — requisito ausente é pendência
+ * (invariante 3), então tem de aparecer, não sumir.
+ *
+ * Id repetido resolve pela última entrada. Como o formulário entra depois da
+ * leitura, prevalece a regra sobre a interpretação do modelo.
+ *
+ * É esta lista, e não a crua, que vai para o placar E para o dossiê: as duas
+ * peças precisam falar do mesmo conjunto.
+ */
+export function consolidarAvaliacoes(
   avaliacoes: AvaliacaoRequisito[],
-): ResumoTema6 {
+): AvaliacaoRequisito[] {
   const porId = new Map(avaliacoes.map((a) => [a.id, a]));
-  const conhecidas = REQUISITOS_TEMA_6.map<AvaliacaoRequisito>(
+  return REQUISITOS_TEMA_6.map<AvaliacaoRequisito>(
     (r) =>
       porId.get(r.id) ?? {
         id: r.id,
@@ -129,17 +165,28 @@ export function resumirTema6(
         evidencias: [],
       },
   );
+}
+
+/** Consolida as avaliações (vindas do LLM) sem deixar o modelo decidir o placar. */
+export function resumirTema6(
+  avaliacoes: AvaliacaoRequisito[],
+): ResumoTema6 {
+  const conhecidas = consolidarAvaliacoes(avaliacoes);
 
   const conta = (s: StatusRequisito) =>
     conhecidas.filter((a) => a.status === s).length;
 
   const soma = conhecidas.reduce((acc, a) => acc + PESO[a.status], 0);
-  const pendencias = conhecidas
-    .filter((a) => a.status !== "ok")
-    .map((a) => {
-      const req = REQUISITOS_TEMA_6.find((r) => r.id === a.id);
-      return a.pendencia ?? `${req?.titulo}: ${req?.comoComprovar}`;
-    });
+  const pendencias = [
+    ...new Set(
+      conhecidas
+        .filter((a) => a.status !== "ok")
+        .map((a) => {
+          const req = REQUISITOS_TEMA_6.find((r) => r.id === a.id);
+          return a.pendencia ?? `${req?.titulo}: ${req?.comoComprovar}`;
+        }),
+    ),
+  ];
 
   return {
     total: REQUISITOS_TEMA_6.length,

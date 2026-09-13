@@ -1,9 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { calcularCustoAnual } from "../src/domain/custo.ts";
-import { definirRota } from "../src/domain/rota.ts";
-import { resumirTema6, REQUISITOS_TEMA_6 } from "../src/domain/tema6.ts";
+import { definirRota, orgaoAdministrativo } from "../src/domain/rota.ts";
+import {
+  avaliacoesSemRegistroAnvisa, resumirTema6, REQUISITOS_TEMA_6,
+} from "../src/domain/tema6.ts";
 import { semMarkdown, semNulos } from "../src/llm/tolerante.ts";
+import { montarPromptDossie } from "../src/llm/redigirDossie.ts";
 import { classificarPdf } from "../src/documentos/pdf.ts";
 import {
   avaliarConitec, avaliarHipossuficiencia, situacaoDoStatusConitec,
@@ -522,4 +525,96 @@ test("status do painel da CONITEC vira hipótese do requisito", () => {
     situacaoDoStatusConitec("Processo encerrado: decisão de incorporação no SUS"),
     "nao_informado",
   );
+});
+
+// ---- auditoria jurídica dos prompts ----------------------------------------
+
+/** Rota mínima para montar o prompt do dossiê, com o polo passivo que interessa. */
+function rotaDeTeste(poloPassivo: string[]) {
+  return {
+    justica: poloPassivo.includes("União") ? "federal" : "estadual",
+    poloPassivo,
+    faixa: "ressarcimento_federal",
+    custeio: "Estado custeia",
+    fundamento: ["fundamento"],
+    zonaDeAtencao: false,
+    custo: {
+      unidadesPorAno: 365, apresentacoesPorAno: 12, custoAnual: 12000,
+      custoMensalMedio: 1000, precoUnitario: 33, emSalariosMinimos: 7.4,
+      salarioMinimoUsado: 1621, tetoEmReais: 340410, precoProvisorio: false,
+      memoria: ["memória"],
+    },
+  } as never;
+}
+
+const RESUMO_VAZIO = {
+  total: 6, ok: 0, fracos: 0, faltantes: 0, naoAvaliados: 6,
+  prontidao: 0, aptoParaProtocolo: false, pendencias: [],
+};
+
+test("requerimento é endereçado ao ente que responde, não sempre ao Estado", () => {
+  assert.equal(orgaoAdministrativo(["União"]), "Ministério da Saúde (União)");
+  assert.equal(orgaoAdministrativo(["Estado"]), "Secretaria Estadual de Saúde");
+  assert.equal(
+    orgaoAdministrativo(["Estado", "Município"]),
+    "Secretaria Estadual de Saúde e Secretaria Municipal de Saúde",
+  );
+
+  // A negativa do requisito 1 tem de vir de quem será réu: numa rota federal,
+  // requerimento à secretaria estadual não serve.
+  const federal = montarPromptDossie(
+    { rota: rotaDeTeste(["União"]), resumo: RESUMO_VAZIO, avaliacoes: [], medicamento: "X", fontes: [] },
+    "[F1] corpus",
+  );
+  assert.match(federal, /Ministério da Saúde/);
+  assert.ok(!federal.includes("Secretaria Estadual"));
+});
+
+test("dossiê recebe a avaliação de cada requisito, não só o placar", () => {
+  const prompt = montarPromptDossie(
+    {
+      rota: rotaDeTeste(["Estado"]),
+      resumo: { ...RESUMO_VAZIO, ok: 1, naoAvaliados: 5 },
+      avaliacoes: [
+        {
+          id: "negativa_administrativa",
+          status: "ok",
+          justificativa: "há negativa expressa",
+          evidencias: ["indeferido em 12/03"],
+          pendencia: undefined,
+        },
+        {
+          id: "hipossuficiencia",
+          status: "fraco",
+          justificativa: "só a declaração",
+          evidencias: [],
+          pendencia: "juntar comprovante de renda",
+        },
+      ],
+      medicamento: "X",
+      fontes: [],
+    },
+    "[F1] corpus",
+  );
+
+  // Sem estes dados o modelo teria de inventar o "requisito a requisito".
+  assert.match(prompt, /Negativa administrativa prévia \(negativa_administrativa\): ok/);
+  assert.match(prompt, /"indeferido em 12\/03"/);
+  assert.match(prompt, /Incapacidade financeira \(hipossuficiencia\): fraco/);
+  assert.match(prompt, /juntar comprovante de renda/);
+  assert.match(prompt, /não reavalie/);
+});
+
+test("sem registro na ANVISA, os seis do Tema 6 ficam não avaliados e apontam o Tema 500", () => {
+  const avaliacoes = avaliacoesSemRegistroAnvisa();
+  assert.equal(avaliacoes.length, REQUISITOS_TEMA_6.length);
+  assert.ok(avaliacoes.every((a) => a.status === "nao_avaliado"));
+
+  const resumo = resumirTema6(avaliacoes);
+  assert.equal(resumo.aptoParaProtocolo, false);
+  assert.equal(resumo.naoAvaliados, 6);
+  // Uma pendência, não seis repetidas.
+  assert.equal(resumo.pendencias.length, 1);
+  assert.match(resumo.pendencias[0]!, /Tema 500/);
+  assert.match(resumo.pendencias[0]!, /agência de regulação estrangeira/);
 });

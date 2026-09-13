@@ -288,3 +288,64 @@ test("análise com progresso: erro no meio não vaza no evento nem no log", asyn
   }
   await app.close();
 });
+
+test("medicamento sem registro na ANVISA não vai para o teste do Tema 6", async () => {
+  let chamouAIA = false;
+  const ia: Dependencias["ia"] = {
+    ...comIA,
+    analisarTema6: async (entrada) => {
+      chamouAIA = true;
+      return comIA.analisarTema6(entrada);
+    },
+  };
+  const { app } = await montar({ ia });
+
+  const r = await app.inject({
+    method: "POST",
+    url: "/api/analise",
+    payload: {
+      ...caso,
+      medicamento: { ...caso.medicamento, registroAnvisa: { possui: false } },
+    },
+  });
+
+  assert.equal(r.statusCode, 200);
+  const corpo = r.json();
+
+  // A tese do Tema 6 alcança medicamento registrado. Sem registro, rodar a
+  // leitura entregaria ao advogado o checklist de outro caso.
+  assert.equal(chamouAIA, false);
+  assert.equal(corpo.tema6.resumo.naoAvaliados, 6);
+  assert.equal(corpo.tema6.resumo.aptoParaProtocolo, false);
+  assert.match(corpo.tema6.resumo.pendencias.join(" "), /Tema 500/);
+
+  // Mesmo os dois requisitos de formulário ficam de fora: placar parcial de um
+  // teste que não é o do caso seria pior que nenhum.
+  assert.ok(corpo.tema6.avaliacoes.every((a: { status: string }) => a.status === "nao_avaliado"));
+
+  // Sem chamada, não há prompt do Tema 6 a exibir na transparência.
+  assert.deepEqual(
+    corpo.prompts.etapas.map((e: { id: string }) => e.id),
+    ["dossie"],
+  );
+  await app.close();
+});
+
+test("o dossiê recebe a avaliação de cada requisito, não só o placar", async () => {
+  let recebeu: { avaliacoes?: unknown[] } = {};
+  const ia: Dependencias["ia"] = {
+    ...comIA,
+    redigirDossie: async (args) => {
+      recebeu = args;
+      return comIA.redigirDossie(args);
+    },
+  };
+  const { app } = await montar({ ia });
+
+  const r = await app.inject({ method: "POST", url: "/api/analise", payload: caso });
+
+  assert.equal(r.statusCode, 200);
+  // Quatro lidos nos documentos mais os dois apurados na conferência.
+  assert.equal(recebeu.avaliacoes?.length, REQUISITOS_TEMA_6.length);
+  await app.close();
+});

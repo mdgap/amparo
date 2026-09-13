@@ -118,3 +118,20 @@ export function definirRota(
 
   return { justica, poloPassivo, faixa, custeio, fundamento, zonaDeAtencao, custo };
 }
+
+/**
+ * A quem endereçar o requerimento administrativo.
+ *
+ * A negativa exigida pelo requisito 1 do Tema 6 precisa vir do ente que
+ * responde pelo fornecimento: requerimento à secretaria estadual não produz
+ * negativa da União, e o requisito continua em aberto contra quem será réu.
+ */
+export function orgaoAdministrativo(poloPassivo: string[]): string {
+  const orgaos = poloPassivo.map((ente) => {
+    if (ente === "União") return "Ministério da Saúde (União)";
+    if (ente === "Estado") return "Secretaria Estadual de Saúde";
+    if (ente === "Município") return "Secretaria Municipal de Saúde";
+    return ente;
+  });
+  return orgaos.join(" e ");
+}
