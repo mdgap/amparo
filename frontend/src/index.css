@@ -197,3 +197,13 @@ h1, h2, h3, .fonte-display {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
+
+/*
+ * Cursor de mão em todo controle clicável. O preflight do Tailwind v4 deixa
+ * <button> com cursor padrão; os componentes do HeroUI já tratam o próprio.
+ * :where() mantém especificidade zero — `cursor-not-allowed` continua valendo
+ * nas etapas bloqueadas.
+ */
+:where(button:not(:disabled), summary, [role="tab"], label[for]) {
+  cursor: pointer;
+}
