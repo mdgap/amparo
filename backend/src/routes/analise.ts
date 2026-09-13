@@ -1,14 +1,13 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import type { IA, Repositorio } from "../app.ts";
+import type { anonimizarVarios } from "../documentos/anonimizar.ts";
+import { montarRegistro, type RegistroAnalise } from "../domain/historico.ts";
 import { definirRota } from "../domain/rota.ts";
 import { resumirTema6, REQUISITOS_TEMA_6 } from "../domain/tema6.ts";
 import { PARAMETROS } from "../domain/parametros.ts";
-import { analisarTema6 } from "../llm/analisarTema6.ts";
-import { redigirDossie } from "../llm/redigirDossie.ts";
 import { PROMPT_VERSAO } from "../llm/prompts/sistema.ts";
-import { query } from "../db.ts";
-import { env, temLLM } from "../env.ts";
-import { anonimizarVarios } from "../documentos/anonimizar.ts";
+import { env } from "../env.ts";
 import { avaliarConitec, avaliarHipossuficiencia } from "../domain/formulario.ts";
 
 const medicamentoSchema = z.object({
@@ -76,11 +75,24 @@ export interface Passo {
   detalhe?: string;
 }
 
-export async function rotasDeAnalise(app: FastifyInstance) {
+export interface OpcoesAnalise {
+  repositorio: Repositorio;
+  ia: IA;
+  anonimizar: typeof anonimizarVarios;
+}
+
+export async function rotasDeAnalise(app: FastifyInstance, { repositorio, ia, anonimizar }: OpcoesAnalise) {
+  // Falha ao gravar não derruba a análise. Só o tipo do erro vai para o log:
+  // a mensagem de um erro de banco pode carregar os valores da linha.
+  const gravar = (registro: RegistroAnalise) =>
+    repositorio.gravarAnalise(registro).catch((e: unknown) => {
+      app.log.warn({ tipo: e instanceof Error ? e.name : typeof e }, "análise não persistida");
+    });
+
   app.get("/requisitos", async () => ({
     requisitos: REQUISITOS_TEMA_6,
     parametros: PARAMETROS,
-    iaDisponivel: temLLM,
+    iaDisponivel: ia.temLLM,
   }));
 
   // Só o motor determinístico: responde sem chave de API e sem rede.
@@ -106,7 +118,7 @@ export async function rotasDeAnalise(app: FastifyInstance) {
 
     aviso({ id: "anonimizacao", estado: "fazendo" });
     const ordem = ["laudo", "receita", "notaENatJus", "requerimentoAdministrativo"] as const;
-    const limpos = await anonimizarVarios(ordem.map((c) => documentos[c] ?? ""));
+    const limpos = await anonimizar(ordem.map((c) => documentos[c] ?? ""));
     const anonimizados = Object.fromEntries(
       ordem.map((campo, i) => [campo, limpos.textos[i]!]),
     ) as Record<(typeof ordem)[number], string>;
@@ -127,7 +139,7 @@ export async function rotasDeAnalise(app: FastifyInstance) {
     });
 
     aviso({ id: "tema6", estado: "fazendo" });
-    const { avaliacoes, alertaENatJus, fontes, prompt: promptTema6 } = await analisarTema6({
+    const { avaliacoes, alertaENatJus, fontes, prompt: promptTema6 } = await ia.analisarTema6({
       ...anonimizados,
       medicamento: medicamento.nome,
     });
@@ -153,7 +165,7 @@ export async function rotasDeAnalise(app: FastifyInstance) {
     });
 
     aviso({ id: "dossie", estado: "fazendo" });
-    const dossie = await redigirDossie({
+    const dossie = await ia.redigirDossie({
       rota, resumo, medicamento: medicamento.nome, alertaENatJus, fontes,
     });
     aviso({ id: "dossie", estado: "feito", detalhe: "Cinco peças redigidas" });
@@ -193,17 +205,9 @@ export async function rotasDeAnalise(app: FastifyInstance) {
       ],
     };
 
-    await query(
-      `INSERT INTO analise (parametros_versao, entrada, rota, tema6, dossie)
-       VALUES ($1,$2,$3,$4,$5)`,
-      [
-        `${PARAMETROS.versao}/${PROMPT_VERSAO}`,
-        JSON.stringify({ medicamento, posologia }),
-        JSON.stringify(rota),
-        JSON.stringify(tema6),
-        JSON.stringify({ ...dossie, prompt: undefined }),
-      ],
-    ).catch((e) => app.log.warn({ e }, "análise não persistida"));
+    // A resposta leva a avaliação completa e os prompts; o banco guarda só o
+    // que `montarRegistro` lista.
+    await gravar(montarRegistro({ medicamento, posologia, rota, tema6, dossie }));
 
     return {
       rota,
@@ -222,7 +226,7 @@ export async function rotasDeAnalise(app: FastifyInstance) {
 
     const textos = Object.values(parsed.data.documentos).filter(Boolean).join("\n");
     if (PII.test(textos)) return reply.code(422).send({ erro: ERRO_CPF });
-    if (!temLLM) return reply.code(503).send({ erro: AVISO_SEM_IA });
+    if (!ia.temLLM) return reply.code(503).send({ erro: AVISO_SEM_IA });
 
     reply.hijack();
     reply.raw.writeHead(200, {
@@ -239,11 +243,11 @@ export async function rotasDeAnalise(app: FastifyInstance) {
       const resultado = await executarAnalise(parsed.data, (passo) => enviar({ tipo: "passo", ...passo }));
       enviar({ tipo: "fim", resultado });
     } catch (e) {
-      req.log.error({ e }, "falha na análise com progresso");
-      enviar({
-        tipo: "erro",
-        erro: e instanceof Error ? e.message : "Falha ao processar a análise",
-      });
+      // A resposta foi sequestrada para o SSE, então o tratador de erros do app
+      // não passa por aqui. Mesma regra dele: só o tipo no log e mensagem fixa
+      // no evento, porque a mensagem original pode trazer o texto do documento.
+      req.log.error({ tipo: e instanceof Error ? e.name : typeof e }, "falha na análise com progresso");
+      enviar({ tipo: "erro", erro: "Falha ao processar a análise. Tente novamente." });
     } finally {
       reply.raw.end();
     }
@@ -257,12 +261,17 @@ export async function rotasDeAnalise(app: FastifyInstance) {
     const textos = Object.values(documentos).filter(Boolean).join("\n");
     if (PII.test(textos)) return reply.code(422).send({ erro: ERRO_CPF });
 
-    if (apenasRota || !temLLM) {
+    if (apenasRota || !ia.temLLM) {
+      const rota = definirRota(medicamento, posologia);
+      // Conferir só a rota é prévia, não análise: não entra no histórico.
+      if (!apenasRota) {
+        await gravar(montarRegistro({ medicamento, posologia, rota, tema6: null, dossie: null }));
+      }
       return {
-        rota: definirRota(medicamento, posologia),
+        rota,
         tema6: null,
         dossie: null,
-        aviso: temLLM ? undefined : AVISO_SEM_IA,
+        aviso: ia.temLLM ? undefined : AVISO_SEM_IA,
         parametrosVersao: PARAMETROS.versao,
       };
     }
