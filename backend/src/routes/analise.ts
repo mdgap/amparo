@@ -5,6 +5,7 @@ import type { anonimizarVarios } from "../documentos/anonimizar.ts";
 import { montarRegistro, type RegistroAnalise } from "../domain/historico.ts";
 import { definirRota } from "../domain/rota.ts";
 import {
+  alertaDeNulidade,
   avaliacoesSemRegistroAnvisa,
   consolidarAvaliacoes,
   resumirTema6,
@@ -187,6 +188,10 @@ export async function rotasDeAnalise(app: FastifyInstance, { repositorio, ia, an
       detalhe: `${resumo.ok} ok, ${resumo.fracos} fraco(s), ${resumo.faltantes} faltando — ${resumo.aptoParaProtocolo ? "apto" : "não apto"} para protocolo`,
     });
 
+    // Dever do juízo, não requisito do autor — mas quem protocola sem a nota
+    // entrega decisão exposta à nulidade, então o aviso é para o advogado.
+    const nulidade = alertaDeNulidade(Boolean(documentos.notaENatJus?.trim()));
+
     aviso({ id: "dossie", estado: "fazendo" });
     const dossie = await ia.redigirDossie({
       rota,
@@ -194,6 +199,7 @@ export async function rotasDeAnalise(app: FastifyInstance, { repositorio, ia, an
       avaliacoes: avaliadas,
       medicamento: medicamento.nome,
       alertaENatJus,
+      alertaDeNulidade: nulidade,
       fontes,
     });
     aviso({ id: "dossie", estado: "feito", detalhe: "Cinco peças redigidas" });
@@ -202,6 +208,7 @@ export async function rotasDeAnalise(app: FastifyInstance, { repositorio, ia, an
       avaliacoes: avaliadas,
       resumo,
       alertaENatJus,
+      alertaDeNulidade: nulidade,
       fontes,
     };
 

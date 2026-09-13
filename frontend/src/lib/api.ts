@@ -36,6 +36,8 @@ export interface RequisitoTema6 {
   descricao: string;
   fonte: string;
   comoComprovar: string;
+  /** Diz o que é padrão da tese e o que é conferência operacional do Amparo. */
+  notaDeAplicacao?: string;
   /** Régua de ok/fraco/falta, transcrita do Guia do CNJ. */
   regraOk: string;
 }
@@ -81,6 +83,7 @@ export interface Analise {
       pendencias: string[];
     };
     alertaENatJus?: string;
+    alertaDeNulidade?: string | null;
     fontes: Fonte[];
   } | null;
   dossie: Dossie | null;

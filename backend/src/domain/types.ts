@@ -77,10 +77,16 @@ export interface RequisitoTema6 {
   titulo: string;
   descricao: string;
   /**
-   * Critério objetivo de ok / fraco / falta, transcrito do Guia do CNJ.
-   * Vai literal para o prompt: a régua é do domínio, não do modelo.
+   * Critério objetivo de ok / fraco / falta. Vai literal para o prompt: a régua
+   * é do domínio, não do modelo.
    */
   regraOk: string;
+  /**
+   * Quando a régua vai além do que a fonte enumera, diz o que é padrão da tese
+   * e o que é conferência operacional nossa. Sem isto, o campo `fonte` afirma
+   * que a norma lista um checklist que ela não lista.
+   */
+  notaDeAplicacao?: string;
   /**
    * De onde sai a resposta. "documento" vai para o modelo ler; "formulario" é
    * apurado em código a partir do que o advogado informou na conferência.

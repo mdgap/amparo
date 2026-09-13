@@ -75,6 +75,17 @@ export function Achados({ analise, catalogo, documentos, onVoltar, onVerDossie }
         </Alert>
       )}
 
+      {/* Dever do juízo, não requisito do autor — mas o risco é de quem protocola. */}
+      {tema6?.alertaDeNulidade && (
+        <Alert className="mt-6" status="warning">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>Risco de nulidade: consulta ao NAT-Jus</Alert.Title>
+            <Alert.Description>{tema6.alertaDeNulidade}</Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
+
       {/* Alternância entre achados e documento em telas estreitas */}
       <div className="mt-8 flex gap-2 lg:hidden" role="tablist">
         {(["achados", "documento"] as const).map((id) => (
@@ -126,6 +137,7 @@ export function Achados({ analise, catalogo, documentos, onVoltar, onVerDossie }
                     }
                     evidencias={av?.evidencias ?? []}
                     fonte={req.fonte}
+                    notaDeAplicacao={req.notaDeAplicacao}
                     // Análise reaberta do histórico não guarda justificativa: cai na descrição.
                     resumo={av?.justificativa || req.descricao}
                     status={av?.status ?? "nao_avaliado"}
@@ -141,6 +153,7 @@ export function Achados({ analise, catalogo, documentos, onVoltar, onVerDossie }
                   acao={req.comoComprovar}
                   evidencias={[]}
                   fonte={req.fonte}
+                  notaDeAplicacao={req.notaDeAplicacao}
                   resumo={req.descricao}
                   status="nao_avaliado"
                   titulo={req.titulo}
@@ -277,7 +290,7 @@ function RotaResumo({ rota }: { rota: Analise["rota"] }) {
 }
 
 function Achado({
-  titulo, status, resumo, evidencias, fonte, acao, numero, regra,
+  titulo, status, resumo, evidencias, fonte, acao, numero, regra, notaDeAplicacao,
 }: {
   titulo: string;
   status: StatusRequisito;
@@ -287,6 +300,7 @@ function Achado({
   acao: string;
   numero: number;
   regra?: string;
+  notaDeAplicacao?: string;
 }) {
   return (
     <details className="cartao group">
@@ -326,7 +340,16 @@ function Achado({
           <p className="text-base">{acao}</p>
         </div>
 
-        <p className="mb-4 text-sm text-muted">Fonte: {fonte}</p>
+        <p className="mb-2 text-sm text-muted">Fonte: {fonte}</p>
+
+        {/* O que a norma enumera e o que é conferência nossa não podem sair
+            com a mesma cara: a fonte acima não lista o checklist inteiro. */}
+        {notaDeAplicacao && (
+          <p className="mb-4 border-s-2 border-[var(--border)] ps-3 text-sm text-muted">
+            <strong className="font-medium text-foreground">Como aplicamos:</strong>{" "}
+            {notaDeAplicacao}
+          </p>
+        )}
 
         <AjudaIA
           destaque={regra}

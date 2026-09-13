@@ -69,6 +69,7 @@ NÚMEROS JÁ CALCULADOS PELO MOTOR — repita exatamente, não recalcule:
 SITUAÇÃO DO TEMA 6: ${resumo.ok} de ${resumo.total} requisitos ok, ${resumo.fracos} fracos, ${resumo.faltantes} faltando.
 Pendências apuradas: ${resumo.pendencias.join(" | ") || "nenhuma"}
 ${args.alertaENatJus ? `Alerta e-NatJus: ${args.alertaENatJus}` : ""}
+${args.alertaDeNulidade ? `RISCO DE NULIDADE: ${args.alertaDeNulidade}` : ""}
 
 AVALIAÇÃO REQUISITO A REQUISITO — já feita na etapa anterior, não reavalie:
 ${porRequisito || "(nenhum requisito avaliado)"}
@@ -78,9 +79,10 @@ TAREFA — produza cinco peças:
 2. requerimentoAdministrativo: minuta de requerimento dirigida a ${orgaoAdministrativo(rota.poloPassivo)}, pronta para preencher os dados do paciente (use [NOME], [CPF], [ENDEREÇO] como lacunas). Endereçar a ente diverso do polo passivo não produz a negativa que o requisito 1 exige.
 3. resumoDeEvidencia: o que os documentos do caso já provam, requisito a requisito, usando EXATAMENTE os status, as justificativas e as evidências do bloco acima. Não atribua a um requisito prova que não esteja listada ali, e não altere o status de nenhum.
 4. pendenciasDoCliente: lista objetiva do que pedir ao cliente, em ordem de urgência.
-5. trechoDePeticao: trecho de petição sobre competência e cabimento — apenas essa parte, não a petição inteira.
+5. trechoDePeticao: trecho de petição sobre competência e cabimento — apenas essa parte, não a petição inteira. Enfrente também os dois pontos que o item 3 do Tema 6 impõe à decisão sob pena de nulidade: a análise do ato administrativo de não incorporação e da negativa, pelo controle de legalidade e sem incursão no mérito administrativo, e a consulta prévia ao NAT-Jus. Antecipar os dois na inicial é o que reduz o risco de a decisão ser anulada.
 
 ${resumo.aptoParaProtocolo ? "" : 'IMPORTANTE: nem todos os requisitos estão cumpridos. Abra o memorando dizendo que o caso NÃO está pronto para protocolo e que a via administrativa/documentação deve ser completada antes.'}
+${args.alertaDeNulidade ? "IMPORTANTE: registre o risco de nulidade acima no memorando e inclua a providência na lista de pendências do cliente." : ""}
 
 Responda SOMENTE com JSON: {"memorandoDeRota","requerimentoAdministrativo","resumoDeEvidencia","pendenciasDoCliente":[],"trechoDePeticao"}`;
 
@@ -94,6 +96,8 @@ export async function redigirDossie(args: {
   avaliacoes: AvaliacaoRequisito[];
   medicamento: string;
   alertaENatJus?: string;
+  /** Item 3.b do Tema 6: ausência de nota do NAT-Jus expõe a decisão à nulidade. */
+  alertaDeNulidade?: string | null;
   fontes: TrechoEncontrado[];
 }): Promise<Dossie> {
   const { rota, resumo } = args;

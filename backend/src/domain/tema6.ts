@@ -73,13 +73,15 @@ export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
     origem: "documento",
     titulo: "Indicação clínica imprescindível, com laudo fundamentado",
     descricao:
-      "Laudo médico específico e minucioso, com cinco elementos: CID; histórico de tratamentos COM DATAS; justificativa da dose; justificativa da duração; assinatura com CRM.",
+      "Laudo fundamentado e circunstanciado do médico que assiste o paciente, comprovando a imprescindibilidade do medicamento, descrevendo o tratamento já realizado e atestando a ineficácia dos fármacos fornecidos pelo SUS para a moléstia.",
     regraOk:
-      "ok: os CINCO elementos estão presentes. fraco: falta um ou mais dos cinco — e a saída deve dizer QUAL falta. falta: laudo ausente ou genérico.",
+      "Confira DOIS elementos da tese e QUATRO de forma do laudo. Da tese: (a) imprescindibilidade do medicamento para este paciente; (b) ineficácia, para a moléstia, dos fármacos fornecidos pelo SUS, com o tratamento já realizado descrito. De forma: CID; histórico de tratamentos com datas; justificativa da dose; justificativa da duração; e assinatura com CRM do médico assistente. ok: os dois da tese presentes E o laudo assinado com CRM. fraco: falta algum elemento — a saída deve dizer QUAL falta, e separar se o que falta é da tese ou de forma. falta: laudo ausente, genérico, ou que não atesta a ineficácia dos fármacos do SUS.",
     fonte:
-      "Guia Rápido do CNJ (nov/2025), item 3.1, requisito 5; Tema 106/STJ (REsp 1.657.156)",
+      "Tema 6/STF (RE 566.471), item 2, alínea 'e'; Tema 106/STJ (REsp 1.657.156), requisito (i); Guia Rápido do CNJ (nov/2025), item 3.1, requisito 5, e item 5",
     comoComprovar:
-      "Laudo do médico assistente contendo CID, histórico de tratamentos com datas, justificativa de dose e de duração, e assinatura com CRM.",
+      "Laudo do médico assistente que ateste a imprescindibilidade e a ineficácia dos fármacos do SUS, descrevendo o tratamento já realizado, com CID, datas, justificativa de dose e de duração, e assinatura com CRM.",
+    notaDeAplicacao:
+      "A tese exige laudo 'fundamentado e circunstanciado' (STJ) e 'específico e minucioso' (CNJ) — nenhuma das duas enumera elementos. Da tese vêm a imprescindibilidade, a descrição do tratamento já realizado e a atestação de ineficácia dos fármacos do SUS. CID, datas, justificativa de dose e de duração e CRM são conferência operacional do Amparo para dar concretude a 'minucioso', não requisitos listados na norma.",
   },
   {
     id: "hipossuficiencia",
@@ -108,6 +110,21 @@ export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
  */
 export const PENDENCIA_TEMA_500 =
   "Medicamento sem registro na ANVISA: o caso não segue o Tema 6. Comprove os três requisitos do Tema 500 — pedido de registro no Brasil (salvo órfãos e doenças raras), registro em agência de regulação estrangeira renomada e inexistência de substituto terapêutico registrado no Brasil —, além da mora irrazoável da ANVISA.";
+
+/**
+ * Item 3, alínea b, do Tema 6: o juízo deve consultar o NAT-Jus sempre que
+ * disponível na jurisdição e NÃO pode fundamentar a decisão unicamente em
+ * prescrição, relatório ou laudo juntado pelo autor — sob pena de nulidade
+ * (CPC, art. 489, § 1º, V e VI, c/c art. 927, III, § 1º).
+ *
+ * Não é requisito a cargo do autor: é dever do juízo. Mas quem protocola sem a
+ * nota entrega uma decisão exposta à nulidade, e isso é problema do advogado.
+ * Por isso o alerta sai aqui, e não como um sétimo requisito.
+ */
+export function alertaDeNulidade(temNotaENatJus: boolean): string | null {
+  if (temNotaENatJus) return null;
+  return "Nota técnica do NAT-Jus não juntada. O item 3, alínea b, do Tema 6 exige consulta prévia ao NAT-Jus sempre que disponível na jurisdição e veda decisão fundada unicamente no laudo do autor, sob pena de nulidade. Busque a nota na consulta pública do e-NatJus antes de protocolar; não havendo, requeira na inicial a consulta ao núcleo ou a ente com expertise técnica.";
+}
 
 /** Os seis como "não avaliado", dizendo por quê. Não chama o modelo. */
 export function avaliacoesSemRegistroAnvisa(): AvaliacaoRequisito[] {
