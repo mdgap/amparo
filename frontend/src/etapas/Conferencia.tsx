@@ -197,7 +197,7 @@ export function Conferencia({
           <p className="mb-5 text-xs text-muted">
             Multiplica o preço da apresentação e define o custo anual.
           </p>
-          <div className="grid gap-5 sm:grid-cols-3">
+          <div className="grid gap-5">
             <NumberField
               minValue={0.25}
               step={0.25}
