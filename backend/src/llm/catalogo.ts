@@ -236,6 +236,25 @@ export function catalogoDePontos(): PontoDeIA[] {
         "A ordem é palpite pela redação do laudo, não conclusão. Dose em mg/kg não vira unidade por tomada. Tudo entra como sugestão para conferência na etapa 2.",
     },
     {
+      id: "formulario",
+      titulo: "Situação na CONITEC e incapacidade financeira",
+      natureza: "deterministico",
+      arquivo: "backend/src/domain/formulario.ts",
+      oQueFaz:
+        "Apura dois dos seis requisitos a partir do que foi informado na conferência: a situação do medicamento na CONITEC e a prova de hipossuficiência.",
+      porQue:
+        "Não usa modelo, e antes usava. Situação na CONITEC vem de consulta ao portal, e hipossuficiência vem de declaração e comprovante — nenhum dos dois está no laudo ou na receita. Pedir ao modelo que os encontrasse nos documentos produzia 'falta' em todo caso, não por falha dele, mas porque o dado nunca era perguntado.",
+      entradas: [
+        "Situação na CONITEC: nunca avaliado, em análise desde uma data, ou recomendação desfavorável",
+        "Se houve demonstração da ilegalidade do ato, quando a recomendação for desfavorável",
+        "Declaração de hipossuficiência e comprovante de renda",
+      ],
+      saida:
+        "Os requisitos (b) e (f) com status, justificativa e pendência, que entram no placar junto com os quatro avaliados pelo modelo.",
+      limites:
+        "A mora é contada por data: 180 dias prorrogáveis por 90, do art. 19-R da Lei 8.080/1990. Em análise sem data informada não vira mora por suposição — fica como revisão necessária. Recomendação desfavorável só é ok com demonstração da ilegalidade do ato, que é juízo do advogado.",
+    },
+    {
       id: "anonimizacao",
       titulo: "Anonimização dos documentos",
       natureza: "modelo_local",

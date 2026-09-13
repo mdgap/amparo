@@ -110,6 +110,12 @@ export interface EntradaCaso {
     notaENatJus?: string;
     requerimentoAdministrativo?: string;
   };
+  conitec?: {
+    situacao: "nao_informado" | "nunca_avaliado" | "em_analise" | "desfavoravel";
+    desde?: string;
+    ilegalidadeDemonstrada?: boolean;
+  };
+  hipossuficiencia?: { declaracao: boolean; comprovanteRenda: boolean };
   apenasRota?: boolean;
 }
 

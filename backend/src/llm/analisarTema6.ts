@@ -7,15 +7,20 @@ import { buscarCorpus, montarContexto } from "../rag/busca.ts";
 import type { AvaliacaoRequisito } from "../domain/types.ts";
 
 const schema = z.object({
-  avaliacoes: z.array(
-    z.object({
-      id: z.string(),
-      status: z.enum(["ok", "fraco", "falta"]),
-      justificativa: z.string(),
-      evidencias: listaDeTextos.default([]),
-      pendencia: z.string().optional(),
-    }),
-  ),
+  // Lista ausente na resposta do modelo vira lista vazia, não erro: pelo
+  // invariante 3, requisito não avaliado é pendência e bloqueia o protocolo.
+  // Derrubar a análise inteira seria perder também os quatro que vieram.
+  avaliacoes: z
+    .array(
+      z.object({
+        id: z.string(),
+        status: z.enum(["ok", "fraco", "falta"]),
+        justificativa: z.string(),
+        evidencias: listaDeTextos.default([]),
+        pendencia: z.string().optional(),
+      }),
+    )
+    .default([]),
   alertaENatJus: z.string().optional(),
 });
 
@@ -44,7 +49,9 @@ export interface EntradaTema6 {
  * exibido ao auditor divergir do que é realmente enviado.
  */
 export function montarPromptTema6(entrada: EntradaTema6, contexto: string): string {
-  const requisitos = REQUISITOS_TEMA_6.map(
+  // Requisito apurado pelo formulário não vai para o modelo: pedir que ele
+  // encontre a situação na CONITEC dentro de um laudo produzia "falta" sempre.
+  const requisitos = REQUISITOS_TEMA_6.filter((r) => r.origem === "documento").map(
     (r) =>
       `- ${r.id}: ${r.titulo}\n  ${r.descricao}\n  REGRA DE CLASSIFICAÇÃO: ${r.regraOk}`,
   ).join("\n");
@@ -88,7 +95,9 @@ export async function analisarTema6(entrada: EntradaTema6): Promise<{
 
   const saida = await pedirJSON({ system: SISTEMA, prompt, schema });
 
-  const validos = new Set(REQUISITOS_TEMA_6.map((r) => r.id));
+  const validos = new Set(
+    REQUISITOS_TEMA_6.filter((r) => r.origem === "documento").map((r) => r.id),
+  );
   return {
     avaliacoes: saida.avaliacoes.filter((a) => validos.has(a.id)),
     alertaENatJus: saida.alertaENatJus,

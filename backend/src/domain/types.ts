@@ -81,6 +81,11 @@ export interface RequisitoTema6 {
    * Vai literal para o prompt: a régua é do domínio, não do modelo.
    */
   regraOk: string;
+  /**
+   * De onde sai a resposta. "documento" vai para o modelo ler; "formulario" é
+   * apurado em código a partir do que o advogado informou na conferência.
+   */
+  origem: "documento" | "formulario";
   fonte: string;
   comoComprovar: string;
 }

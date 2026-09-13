@@ -11,14 +11,15 @@ import {
   api, type Analise, type Passo, type PassoId, type RequisitoTema6,
 } from "./lib/api.ts";
 import {
-  CASO_EXEMPLO, DOCUMENTOS_VAZIOS, MEDICAMENTO_VAZIO,
-  type DadosMedicamento, type Documentos as Docs,
+  CASO_EXEMPLO, DOCUMENTOS_VAZIOS, MEDICAMENTO_VAZIO, PROCESSUAIS_VAZIOS,
+  type DadosMedicamento, type DadosProcessuais, type Documentos as Docs,
 } from "./lib/caso.ts";
 
 export function App() {
   const [etapa, setEtapa] = useState<EtapaId>("documentos");
   const [documentos, setDocumentos] = useState<Docs>(DOCUMENTOS_VAZIOS);
   const [medicamento, setMedicamento] = useState<DadosMedicamento>(MEDICAMENTO_VAZIO);
+  const [processuais, setProcessuais] = useState<DadosProcessuais>(PROCESSUAIS_VAZIOS);
   const [catalogo, setCatalogo] = useState<RequisitoTema6[]>([]);
   const [analise, setAnalise] = useState<Analise | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -55,6 +56,12 @@ export function App() {
           diasPorAno: medicamento.diasPorAno,
         },
         documentos,
+        conitec: {
+          situacao: processuais.conitec.situacao,
+          desde: processuais.conitec.desde || undefined,
+          ilegalidadeDemonstrada: processuais.conitec.ilegalidadeDemonstrada,
+        },
+        hipossuficiencia: processuais.hipossuficiencia,
       }, (passo) => setPassos((atual) => new Map(atual).set(passo.id, passo)));
       setAnalise(resultado);
       setEtapa("achados");
@@ -99,6 +106,8 @@ export function App() {
       {etapa === "conferencia" && (
         <Conferencia
           documentos={documentos}
+          processuais={processuais}
+          onMudarProcessuais={setProcessuais}
           carregando={carregando}
           medicamento={medicamento}
           onAnalisar={() => void analisar()}

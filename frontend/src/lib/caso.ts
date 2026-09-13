@@ -17,6 +17,32 @@ export interface DadosMedicamento {
   diasPorAno: number;
 }
 
+/**
+ * Dois dos seis requisitos não estão em laudo nem em receita: a situação na
+ * CONITEC vem de consulta ao portal, e a hipossuficiência de declaração e
+ * comprovante. São conferidos aqui e apurados por regra, não pelo modelo.
+ */
+export interface DadosProcessuais {
+  conitec: {
+    situacao: "nao_informado" | "nunca_avaliado" | "em_analise" | "desfavoravel";
+    desde: string;
+    ilegalidadeDemonstrada: boolean;
+  };
+  hipossuficiencia: { declaracao: boolean; comprovanteRenda: boolean };
+}
+
+export const PROCESSUAIS_VAZIOS: DadosProcessuais = {
+  conitec: { situacao: "nao_informado", desde: "", ilegalidadeDemonstrada: false },
+  hipossuficiencia: { declaracao: false, comprovanteRenda: false },
+};
+
+export const SITUACOES_CONITEC = [
+  { valor: "nao_informado", rotulo: "Não informado" },
+  { valor: "nunca_avaliado", rotulo: "Nunca avaliado pela CONITEC" },
+  { valor: "em_analise", rotulo: "Pedido em análise" },
+  { valor: "desfavoravel", rotulo: "Recomendação desfavorável" },
+] as const;
+
 export const DOCUMENTOS_VAZIOS: Documentos = {
   laudo: "",
   receita: "",

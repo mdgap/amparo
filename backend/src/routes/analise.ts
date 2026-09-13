@@ -9,6 +9,7 @@ import { PROMPT_VERSAO } from "../llm/prompts/sistema.ts";
 import { query } from "../db.ts";
 import { env, temLLM } from "../env.ts";
 import { anonimizarVarios } from "../documentos/anonimizar.ts";
+import { avaliarConitec, avaliarHipossuficiencia } from "../domain/formulario.ts";
 
 const medicamentoSchema = z.object({
   nome: z.string().min(1),
@@ -27,6 +28,19 @@ const posologiaSchema = z.object({
   diasPorAno: z.number().int().min(1).max(366),
 });
 
+const conitecSchema = z.object({
+  situacao: z
+    .enum(["nao_informado", "nunca_avaliado", "em_analise", "desfavoravel"])
+    .default("nao_informado"),
+  desde: z.string().optional(),
+  ilegalidadeDemonstrada: z.boolean().optional(),
+});
+
+const hipossuficienciaSchema = z.object({
+  declaracao: z.boolean().default(false),
+  comprovanteRenda: z.boolean().default(false),
+});
+
 const analiseSchema = z.object({
   medicamento: medicamentoSchema,
   posologia: posologiaSchema,
@@ -38,6 +52,12 @@ const analiseSchema = z.object({
       requerimentoAdministrativo: z.string().optional(),
     })
     .default({ laudo: "" }),
+  /** Requisitos que saem da conferência, não da leitura de documento. */
+  conitec: conitecSchema.default({ situacao: "nao_informado" }),
+  hipossuficiencia: hipossuficienciaSchema.default({
+    declaracao: false,
+    comprovanteRenda: false,
+  }),
   /** Pula a redação do dossiê (mais rápido para conferir só a rota). */
   apenasRota: z.boolean().default(false),
 });
@@ -118,7 +138,14 @@ export async function rotasDeAnalise(app: FastifyInstance) {
     });
 
     aviso({ id: "placar", estado: "fazendo" });
-    const resumo = resumirTema6(avaliacoes);
+
+    // Dois dos seis requisitos vêm da conferência e são apurados em código —
+    // prazo da CONITEC por data, hipossuficiência por documento informado.
+    const doFormulario = [
+      avaliarConitec(dados.conitec),
+      avaliarHipossuficiencia(dados.hipossuficiencia),
+    ];
+    const resumo = resumirTema6([...avaliacoes, ...doFormulario]);
     aviso({
       id: "placar",
       estado: "feito",
@@ -131,7 +158,12 @@ export async function rotasDeAnalise(app: FastifyInstance) {
     });
     aviso({ id: "dossie", estado: "feito", detalhe: "Cinco peças redigidas" });
 
-    const tema6 = { avaliacoes, resumo, alertaENatJus, fontes };
+    const tema6 = {
+      avaliacoes: [...avaliacoes, ...doFormulario],
+      resumo,
+      alertaENatJus,
+      fontes,
+    };
 
     /**
      * Transparência para auditoria: o que foi enviado ao modelo, literalmente.

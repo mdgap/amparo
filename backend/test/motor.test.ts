@@ -5,6 +5,7 @@ import { definirRota } from "../src/domain/rota.ts";
 import { resumirTema6, REQUISITOS_TEMA_6 } from "../src/domain/tema6.ts";
 import { semMarkdown, semNulos } from "../src/llm/tolerante.ts";
 import { classificarPdf } from "../src/documentos/pdf.ts";
+import { avaliarConitec, avaliarHipossuficiencia } from "../src/domain/formulario.ts";
 import {
   extrairPosologia, precoCmed, reconhecerMedicamentos, unidadesDaApresentacao,
   versaoDaTabela,
@@ -434,4 +435,71 @@ test("peça do dossiê sai sem Markdown", () => {
   assert.match(limpo, /Elaborado por: equipe de triagem\./);
   // Asterisco de multiplicação não é negrito e não pode sumir.
   assert.equal(semMarkdown("30 caixas * R$ 12,00"), "30 caixas * R$ 12,00");
+});
+
+test("mora da CONITEC é apurada por data, não por leitura de documento", () => {
+  const hoje = new Date("2026-09-12T12:00:00Z");
+
+  // Nunca avaliado: a própria ausência de pedido satisfaz o requisito.
+  assert.equal(avaliarConitec({ situacao: "nunca_avaliado" }, hoje).status, "ok");
+
+  // 180 + 90 = 270 dias. Um dia a mais é mora.
+  const vencido = avaliarConitec({ situacao: "em_analise", desde: "2025-12-01" }, hoje);
+  assert.equal(vencido.status, "ok");
+  assert.match(vencido.justificativa, /mora na apreciação/);
+
+  // Dentro do prazo ainda não é mora, e a pendência diz quando vence.
+  const dentro = avaliarConitec({ situacao: "em_analise", desde: "2026-08-01" }, hoje);
+  assert.equal(dentro.status, "fraco");
+  assert.match(dentro.pendencia ?? "", /prazo vence em \d+ dia/);
+
+  // Exatamente no limite ainda está dentro do prazo.
+  const noLimite = avaliarConitec({ situacao: "em_analise", desde: "2025-12-16" }, hoje);
+  assert.equal(noLimite.status, "fraco");
+
+  // Em análise sem data não vira mora por suposição.
+  assert.equal(avaliarConitec({ situacao: "em_analise" }, hoje).status, "fraco");
+
+  // Desfavorável só é ok com demonstração da ilegalidade do ato.
+  assert.equal(avaliarConitec({ situacao: "desfavoravel" }, hoje).status, "fraco");
+  assert.equal(
+    avaliarConitec({ situacao: "desfavoravel", ilegalidadeDemonstrada: true }, hoje).status,
+    "ok",
+  );
+
+  // Nada informado é falta, com a pendência apontando o portal da CONITEC.
+  const semDado = avaliarConitec({ situacao: "nao_informado" }, hoje);
+  assert.equal(semDado.status, "falta");
+  assert.match(semDado.pendencia ?? "", /CONITEC/);
+});
+
+test("hipossuficiência: declaração sozinha é fraco, nunca ok", () => {
+  assert.equal(
+    avaliarHipossuficiencia({ declaracao: true, comprovanteRenda: true }).status,
+    "ok",
+  );
+  assert.equal(
+    avaliarHipossuficiencia({ declaracao: true, comprovanteRenda: false }).status,
+    "fraco",
+  );
+  assert.equal(
+    avaliarHipossuficiencia({ declaracao: false, comprovanteRenda: false }).status,
+    "falta",
+  );
+});
+
+test("resposta do modelo sem avaliações não derruba a análise", () => {
+  // O placar trata a ausência como "não analisado", que bloqueia o protocolo.
+  const resumo = resumirTema6([]);
+  assert.equal(resumo.naoAvaliados, 6);
+  assert.equal(resumo.aptoParaProtocolo, false);
+
+  // E os dois requisitos do formulário continuam valendo mesmo assim.
+  const comFormulario = resumirTema6([
+    avaliarConitec({ situacao: "nunca_avaliado" }, new Date("2026-09-12T12:00:00Z")),
+    avaliarHipossuficiencia({ declaracao: true, comprovanteRenda: true }),
+  ]);
+  assert.equal(comFormulario.ok, 2);
+  assert.equal(comFormulario.naoAvaliados, 4);
+  assert.equal(comFormulario.aptoParaProtocolo, false);
 });

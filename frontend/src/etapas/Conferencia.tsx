@@ -2,14 +2,20 @@ import { useState } from "react";
 import { Button, Checkbox, Input, Label, NumberField, Spinner, TextField } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
 import {
-  IconeAchados, IconeConferencia, IconeOk, IconeRemedio, IconeRevisao, IconeSeta,
+  IconeAchados, IconeCalculadora, IconeConferencia, IconeOk, IconeRemedio,
+  IconeRevisao, IconeSeta,
 } from "../components/Icones.tsx";
 import { AjudaIA } from "../components/AjudaIA.tsx";
 import { api, brl, type ApresentacaoCmed } from "../lib/api.ts";
-import type { DadosMedicamento, Documentos } from "../lib/caso.ts";
+import {
+  SITUACOES_CONITEC, type DadosMedicamento, type DadosProcessuais,
+  type Documentos,
+} from "../lib/caso.ts";
 
 interface Props {
   documentos: Documentos;
+  processuais: DadosProcessuais;
+  onMudarProcessuais: (p: DadosProcessuais) => void;
   medicamento: DadosMedicamento;
   carregando: boolean;
   onMudar: (m: DadosMedicamento) => void;
@@ -22,7 +28,8 @@ interface Props {
  * definem foro e polo passivo, então são conferidos antes de qualquer análise.
  */
 export function Conferencia({
-  documentos, medicamento, carregando, onMudar, onVoltar, onAnalisar,
+  documentos, medicamento, processuais, carregando, onMudar, onMudarProcessuais,
+  onVoltar, onAnalisar,
 }: Props) {
   const set = <K extends keyof DadosMedicamento>(k: K, v: DadosMedicamento[K]) =>
     onMudar({ ...medicamento, [k]: v });
@@ -173,6 +180,7 @@ export function Conferencia({
           </div>
         </section>
 
+        <SituacaoProcessual dados={processuais} onMudar={onMudarProcessuais} />
         </div>
 
         <section className="cartao p-[1.375rem]">
@@ -465,6 +473,171 @@ function BuscaCmed({
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+/**
+ * Dois dos seis requisitos do Tema 6 são conferidos aqui, não lidos dos
+ * documentos: a situação na CONITEC vem de consulta ao portal e a
+ * hipossuficiência de declaração e comprovante. Nenhum dos dois aparece em
+ * laudo ou receita — pedir ao modelo que os encontrasse ali produzia "falta"
+ * em todo caso. Informados aqui, viram regra: o prazo do art. 19-R é contado
+ * por data, em código.
+ */
+function SituacaoProcessual({
+  dados,
+  onMudar,
+}: {
+  dados: DadosProcessuais;
+  onMudar: (d: DadosProcessuais) => void;
+}) {
+  const { conitec, hipossuficiencia } = dados;
+
+  return (
+    <section className="cartao p-[1.375rem]">
+      <div className="mb-1 flex items-center gap-2.5">
+        <span className="icone-secao">
+          <IconeCalculadora className="size-5" />
+        </span>
+        <h2 className="fonte-display text-[1.125rem] font-bold">
+          Situação processual
+        </h2>
+      </div>
+      <p className="mb-5 text-xs text-muted">
+        Dois requisitos do Tema 6 não estão nos documentos. Informe aqui — eles
+        são apurados por regra, não pelo modelo.
+      </p>
+
+      <div className="flex flex-col gap-5">
+        <div>
+          <label
+            className="mb-2 block text-[0.8125rem] text-[#294b36]"
+            htmlFor="conitec-situacao"
+          >
+            Situação na CONITEC
+          </label>
+          <select
+            className="controle w-full rounded-[0.5625rem] border border-[#bfcfc5] bg-white px-3 text-sm"
+            id="conitec-situacao"
+            value={conitec.situacao}
+            onChange={(e) =>
+              onMudar({
+                ...dados,
+                conitec: {
+                  ...conitec,
+                  situacao: e.target.value as DadosProcessuais["conitec"]["situacao"],
+                },
+              })
+            }
+          >
+            {SITUACOES_CONITEC.map((s) => (
+              <option key={s.valor} value={s.valor}>
+                {s.rotulo}
+              </option>
+            ))}
+          </select>
+          <p className="helper mt-2 text-xs leading-relaxed text-muted">
+            Consulte em gov.br/conitec. Nunca avaliado já satisfaz o requisito;
+            em análise depende do prazo de 180 dias, prorrogável por 90.
+          </p>
+        </div>
+
+        {(conitec.situacao === "em_analise" || conitec.situacao === "desfavoravel") && (
+          <div>
+            <label
+              className="mb-2 block text-[0.8125rem] text-[#294b36]"
+              htmlFor="conitec-desde"
+            >
+              {conitec.situacao === "em_analise"
+                ? "Data do protocolo na CONITEC"
+                : "Data da decisão"}
+            </label>
+            <input
+              className="controle w-full rounded-[0.5625rem] border border-[#bfcfc5] bg-white px-3 text-sm"
+              id="conitec-desde"
+              type="date"
+              value={conitec.desde}
+              onChange={(e) =>
+                onMudar({ ...dados, conitec: { ...conitec, desde: e.target.value } })
+              }
+            />
+            {conitec.situacao === "em_analise" && !conitec.desde && (
+              <p className="mt-2 text-xs text-[var(--status-atencao-fg)]">
+                Sem a data não é possível apurar a mora — o requisito fica como
+                revisão necessária.
+              </p>
+            )}
+          </div>
+        )}
+
+        {conitec.situacao === "desfavoravel" && (
+          <Checkbox
+            isSelected={conitec.ilegalidadeDemonstrada}
+            onChange={(v) =>
+              onMudar({
+                ...dados,
+                conitec: { ...conitec, ilegalidadeDemonstrada: v },
+              })
+            }
+          >
+            <Checkbox.Content>
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              Há demonstração da ilegalidade do ato da CONITEC
+            </Checkbox.Content>
+          </Checkbox>
+        )}
+
+        <div className="border-t border-[var(--border)] pt-5">
+          <p className="mb-3 text-[0.8125rem] text-[#294b36]">
+            Incapacidade financeira
+          </p>
+          <div className="flex flex-col gap-3">
+            <Checkbox
+              isSelected={hipossuficiencia.declaracao}
+              onChange={(v) =>
+                onMudar({
+                  ...dados,
+                  hipossuficiencia: { ...hipossuficiencia, declaracao: v },
+                })
+              }
+            >
+              <Checkbox.Content>
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Declaração de hipossuficiência assinada
+              </Checkbox.Content>
+            </Checkbox>
+            <Checkbox
+              isSelected={hipossuficiencia.comprovanteRenda}
+              onChange={(v) =>
+                onMudar({
+                  ...dados,
+                  hipossuficiencia: { ...hipossuficiencia, comprovanteRenda: v },
+                })
+              }
+            >
+              <Checkbox.Content>
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Comprovante de renda anexado
+              </Checkbox.Content>
+            </Checkbox>
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-muted">
+            Só a declaração não basta: a tese pede prova consistente.
+          </p>
+        </div>
+
+        <AjudaIA
+          ponto="formulario"
+          rotulo="Como estes dois requisitos são apurados"
+        />
+      </div>
     </section>
   );
 }

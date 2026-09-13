@@ -19,6 +19,7 @@ import type {
 export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
   {
     id: "negativa_administrativa",
+    origem: "documento",
     titulo: "Negativa administrativa prévia",
     descricao:
       "Negativa de fornecimento na via administrativa, com ato motivado e indicação de substituto. A análise judicial não substitui o ato administrativo.",
@@ -31,6 +32,7 @@ export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
   },
   {
     id: "ilegalidade_nao_incorporacao",
+    origem: "formulario",
     titulo: "Ilegalidade da não incorporação ou mora da CONITEC",
     descricao:
       "Ilegalidade da não incorporação pela CONITEC, ausência de pedido de incorporação, ou mora na análise (prazo de 180+90 dias).",
@@ -43,6 +45,7 @@ export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
   },
   {
     id: "impossibilidade_substituicao",
+    origem: "documento",
     titulo: "Impossibilidade de substituição por medicamento do SUS",
     descricao:
       "Inexistência de substituto nas listas do SUS ou no PCDT. O CNJ exige que o laudo descreva os medicamentos padronizados no SUS já utilizados UM A UM, constando posologia e tempo de uso de cada um.",
@@ -55,6 +58,7 @@ export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
   },
   {
     id: "medicina_baseada_em_evidencias",
+    origem: "documento",
     titulo: "Medicina baseada em evidências",
     descricao:
       "Eficácia, acurácia, efetividade e segurança comprovadas por evidência científica de alto nível: ensaio clínico randomizado, revisão sistemática ou meta-análise. A consulta ao NAT-Jus é obrigatória para não incorporados, se disponível, e a decisão não pode se basear apenas no laudo do autor.",
@@ -66,6 +70,7 @@ export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
   },
   {
     id: "imprescindibilidade_laudo",
+    origem: "documento",
     titulo: "Indicação clínica imprescindível, com laudo fundamentado",
     descricao:
       "Laudo médico específico e minucioso, com cinco elementos: CID; histórico de tratamentos COM DATAS; justificativa da dose; justificativa da duração; assinatura com CRM.",
@@ -78,6 +83,7 @@ export const REQUISITOS_TEMA_6: RequisitoTema6[] = [
   },
   {
     id: "hipossuficiencia",
+    origem: "formulario",
     titulo: "Incapacidade financeira",
     descricao:
       "Prova consistente da incapacidade de arcar com o custo do medicamento. O produto exibe a razão entre custo anual e renda como número, sem julgar se a pessoa é hipossuficiente — quem decide é o juízo.",
