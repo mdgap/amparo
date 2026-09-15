@@ -49,7 +49,7 @@ export function Hackathon() {
       <section className="mt-10" aria-labelledby="equipe-titulo">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#356149]">Quem construiu</p>
         <h2 className="fonte-display mt-2 text-2xl font-bold" id="equipe-titulo">Equipe MindTheGap</h2>
-        <p className="mt-2 max-w-[52rem] text-sm leading-relaxed text-muted">A equipe do hackathon adotou o nome do <a className="font-semibold text-[#155b3d] underline decoration-[#9fb9aa] underline-offset-4 hover:decoration-current" href="https://mdgap.org/" target="_blank" rel="noreferrer">MindTheGap ↗</a>, grupo de pesquisa em inovação e Direito que atua junto ao UEPG LegalTechLab. Paulo é pesquisador do grupo. A parceria entre pesquisa, desenvolvimento e prática jurídica permitiu transformar o problema em um produto demonstrável dentro do tempo do evento.</p>
+        <p className="mt-2 max-w-[52rem] text-sm leading-relaxed text-muted">O nome da equipe veio do <a className="font-semibold text-[#155b3d] underline decoration-[#9fb9aa] underline-offset-4 hover:decoration-current" href="https://mdgap.org/" target="_blank" rel="noreferrer">MindTheGap ↗</a>, grupo de pesquisa em inovação e Direito do qual Paulo faz parte, em colaboração com o UEPG LegalTechLab. Essa origem ajudou a dar forma ao Amparo: a pesquisa trouxe método e repertório, enquanto a experiência jurídica e o desenvolvimento transformaram a ideia em um produto funcional durante o hackathon.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {EQUIPE.map((integrante) => (
             <article className="cartao flex items-center gap-4 p-5" key={integrante.nome}>
@@ -66,6 +66,19 @@ export function Hackathon() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="mt-10" aria-labelledby="pitch-titulo">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#356149]">Apresentação final</p>
+        <h2 className="fonte-display mt-2 text-2xl font-bold" id="pitch-titulo">Pitch da MindTheGap</h2>
+        <p className="mt-2 max-w-[52rem] text-sm leading-relaxed text-muted">A transmissão registra o evento completo. O player começa em 1h56min08s, no momento em que a equipe apresenta o Amparo para a banca da OAB Paraná.</p>
+        <a className="group relative mt-5 block aspect-video overflow-hidden rounded-2xl border border-[var(--border)] bg-black shadow-sm" href="https://youtu.be/zZT8YSC6Qyc?t=6968" target="_blank" rel="noreferrer" aria-label="Assistir ao pitch da MindTheGap no YouTube, a partir de 1 hora, 56 minutos e 8 segundos">
+          <img className="size-full object-cover opacity-75 transition group-hover:scale-[1.01] group-hover:opacity-90" src="https://i.ytimg.com/vi/zZT8YSC6Qyc/maxresdefault.jpg" alt="Transmissão do Hackathon da Cidadania OAB/PR" />
+          <span className="absolute inset-0 flex items-center justify-center">
+            <span className="flex size-16 items-center justify-center rounded-full bg-[#ed1c24] text-2xl text-white shadow-lg transition group-hover:scale-105" aria-hidden="true">▶</span>
+          </span>
+          <span className="absolute bottom-4 left-4 rounded-full bg-black/80 px-4 py-2 text-sm font-semibold text-white">Assistir ao pitch · 1h56min08s</span>
+        </a>
       </section>
     </>
   );

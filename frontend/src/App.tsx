@@ -25,7 +25,7 @@ import {
 } from "./lib/caso.ts";
 
 export function App() {
-  const [etapa, setEtapa] = useState<EtapaId>("painel");
+  const [etapa, setEtapa] = useState<EtapaId>(() => window.location.pathname.replace(/\/$/, "") === "/hackathon" ? "hackathon" : "painel");
   const [documentos, setDocumentos] = useState<Docs>(() => DEMO ? structuredClone(CENARIOS[0]!.documentos) : DOCUMENTOS_VAZIOS);
   const [medicamento, setMedicamento] = useState<DadosMedicamento>(() => DEMO ? structuredClone(CENARIOS[0]!.medicamento) : MEDICAMENTO_VAZIO);
   const [processuais, setProcessuais] = useState<DadosProcessuais>(() => DEMO ? structuredClone(CENARIOS[0]!.processuais) : PROCESSUAIS_VAZIOS);
@@ -45,6 +45,19 @@ export function App() {
   useEffect(() => {
     api.requisitos().then((r) => setCatalogo(r.requisitos)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const voltar = () => setEtapa(window.location.pathname.replace(/\/$/, "") === "/hackathon" ? "hackathon" : "painel");
+    window.addEventListener("popstate", voltar);
+    return () => window.removeEventListener("popstate", voltar);
+  }, []);
+
+  function irPara(proxima: EtapaId) {
+    const rota = proxima === "hackathon" ? "/hackathon" : "/";
+    if (window.location.pathname !== rota) window.history.pushState(null, "", rota);
+    setEtapa(proxima);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   const liberadas = new Set<EtapaId>(["painel", "sobre", "hackathon", "documentos"]);
   if (documentos.laudo.trim() || documentos.requerimentoAdministrativo.trim()) {
@@ -152,9 +165,9 @@ export function App() {
 
   return (
     <div className={DEMO ? "demo-layout" : undefined}>
-    {DEMO && <BarraDemo onAbrirHackathon={() => { setEtapa("hackathon"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />}
+    {DEMO && <BarraDemo onAbrirHackathon={() => irPara("hackathon")} />}
     <ProvedorDeAjuda>
-    <Shell etapa={etapa} liberadas={liberadas} onIr={setEtapa} bloqueada={DEMO && carregando}>
+    <Shell etapa={etapa} liberadas={liberadas} onIr={irPara} bloqueada={DEMO && carregando}>
       {DEMO && <ControlesDemo cenario={cenario} modo={modoDemo} ocupado={carregando || abrindo !== null} onCenario={carregarDemo} onModo={(m) => { configurarSimulacao(m); setModoDemo(m); }} onReiniciar={() => { reiniciarDemo(); carregarDemo(CENARIOS[0]!); setEtapa("painel"); }} />}
       {/* Avisos acima do cabeçalho da tela. O <main> não tem respiro no topo
           (quem dá é o Cabeçalho), então o bloco traz o próprio. */}
