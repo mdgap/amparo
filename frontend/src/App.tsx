@@ -168,7 +168,7 @@ export function App() {
     {DEMO && <BarraDemo onAbrirHackathon={() => irPara("hackathon")} />}
     <ProvedorDeAjuda>
     <Shell etapa={etapa} liberadas={liberadas} onIr={irPara} bloqueada={DEMO && carregando}>
-      {DEMO && <ControlesDemo cenario={cenario} modo={modoDemo} ocupado={carregando || abrindo !== null} onCenario={carregarDemo} onModo={(m) => { configurarSimulacao(m); setModoDemo(m); }} onReiniciar={() => { reiniciarDemo(); carregarDemo(CENARIOS[0]!); setEtapa("painel"); }} />}
+      {DEMO && etapa !== "hackathon" && etapa !== "sobre" && <ControlesDemo cenario={cenario} modo={modoDemo} ocupado={carregando || abrindo !== null} onCenario={carregarDemo} onModo={(m) => { configurarSimulacao(m); setModoDemo(m); }} onReiniciar={() => { reiniciarDemo(); carregarDemo(CENARIOS[0]!); setEtapa("painel"); }} />}
       {/* Avisos acima do cabeçalho da tela. O <main> não tem respiro no topo
           (quem dá é o Cabeçalho), então o bloco traz o próprio. */}
       {(erro || carregando || (reaberta && (etapa === "achados" || etapa === "dossie"))) && (

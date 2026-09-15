@@ -12,9 +12,10 @@ export function BarraDemo({ onAbrirHackathon }: { onAbrirHackathon: () => void }
     return () => { observer.disconnect(); document.documentElement.style.removeProperty("--demo-bar-height"); };
   }, []);
   return (
-    <div ref={ref} className="demo-barra sticky top-0 z-30 overflow-x-auto whitespace-nowrap bg-[#ed1c24] px-4 py-2 text-center text-xs leading-tight text-white" aria-label="Aviso de demonstração">
-      <strong>Demo (POC):</strong> casos, documentos e respostas simulados.{" "}
-      <button className="font-semibold underline underline-offset-4" type="button" onClick={onAbrirHackathon}>Conheça o Amparo →</button>
+    <div ref={ref} className="demo-barra sticky top-0 z-30 overflow-hidden whitespace-nowrap bg-[#ed1c24] px-4 py-2 text-center text-xs leading-tight text-white" aria-label="Aviso de demonstração">
+      <span className="sm:hidden"><strong>Demo:</strong> conteúdo simulado.{" "}</span>
+      <span className="hidden sm:inline"><strong>Demo (POC):</strong> casos, documentos e respostas simulados.{" "}</span>
+      <button className="font-semibold underline underline-offset-4" type="button" onClick={onAbrirHackathon}>Saiba mais →</button>
     </div>
   );
 }
@@ -26,13 +27,13 @@ export function ControlesDemo({ cenario, modo, ocupado, onCenario, onModo, onRei
   return (
     <section aria-label="Controles da demonstração" className="mt-6 rounded-xl border border-[var(--border)] bg-white p-4">
       <div className="flex flex-wrap items-end gap-4">
-        <label className="min-w-0 flex-1 text-xs font-medium" htmlFor="demo-cenario">
+        <label className="min-w-0 basis-full text-xs font-medium sm:flex-1 sm:basis-0" htmlFor="demo-cenario">
           Cenário fictício
           <select id="demo-cenario" className="controle mt-1 block w-full rounded-lg border border-[var(--border)] bg-white px-3 text-sm" value={cenario.id} disabled={ocupado} onChange={(e) => onCenario(CENARIOS.find((c) => c.id === e.target.value)!)}>
             {CENARIOS.map((c) => <option key={c.id} value={c.id}>{c.titulo}</option>)}
           </select>
         </label>
-        <label className="min-w-0 flex-1 text-xs font-medium" htmlFor="demo-modo">
+        <label className="min-w-0 basis-full text-xs font-medium sm:flex-1 sm:basis-0" htmlFor="demo-modo">
           Comportamento da próxima análise
           <select id="demo-modo" className="controle mt-1 block w-full rounded-lg border border-[var(--border)] bg-white px-3 text-sm" value={modo} disabled={ocupado} onChange={(e) => onModo(e.target.value as Simulacao)}>
             <option value="normal">Simulação normal</option>
@@ -40,7 +41,7 @@ export function ControlesDemo({ cenario, modo, ocupado, onCenario, onModo, onRei
             <option value="sem-ia">IA indisponível (somente cálculo)</option>
           </select>
         </label>
-        <button type="button" className="controle rounded-lg border border-[var(--border)] px-4 text-sm disabled:opacity-50" disabled={ocupado} onClick={onReiniciar}>Reiniciar demonstração</button>
+        <button type="button" className="controle w-full rounded-lg border border-[var(--border)] px-4 text-sm disabled:opacity-50 sm:w-auto" disabled={ocupado} onClick={onReiniciar}>Reiniciar demonstração</button>
       </div>
       <p className="mt-3 text-xs leading-relaxed text-muted" role="status">
         {cenario.descricao} As consultas são locais e a análise leva cerca de dez segundos. Edite os números para experimentar o cálculo; documentos alterados ficam sem análise. Recarregar a página restaura os exemplos.

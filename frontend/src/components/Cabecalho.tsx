@@ -52,7 +52,7 @@ export function Cabecalho({
           das outras telas. */}
       <header
         className={`flex flex-wrap items-end justify-between gap-x-6 gap-y-4 pb-6 ${
-          secao === null ? "pt-[5.625rem]" : "pt-7"
+          secao === null ? "pt-10 lg:pt-[5.625rem]" : "pt-7"
         }`}
       >
         <div className="max-w-[55rem]">
@@ -71,7 +71,7 @@ export function Cabecalho({
               </div>
             )}
           </div>
-          <h1 className="fonte-display text-[2.25rem] font-bold leading-[1.18] tracking-[-0.075rem]">
+          <h1 className="fonte-display text-[2rem] font-bold leading-[1.18] tracking-[-0.075rem] sm:text-[2.25rem]">
             {titulo}
           </h1>
           <p className="mt-2.5 max-w-[50rem] text-sm leading-[1.65] text-muted">

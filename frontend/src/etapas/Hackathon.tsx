@@ -18,6 +18,14 @@ export function Hackathon() {
         titulo="Uma ideia premiada, construída em equipe"
       />
 
+      <section className="mb-4 rounded-2xl border border-[var(--border)] bg-white p-6 sm:p-8" aria-labelledby="realizacao-titulo">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#356149]">Realização</p>
+        <h2 className="fonte-display mt-2 text-xl font-bold" id="realizacao-titulo">Uma iniciativa da <a className="underline decoration-[#9fb9aa] underline-offset-4 hover:decoration-current" href="https://eventos.oabpr.org.br/hackathon-cidadania" target="_blank" rel="noreferrer">OAB Paraná ↗</a></h2>
+        <p className="mt-3 max-w-[55rem] text-sm leading-relaxed text-muted">O Hackathon da Cidadania foi organizado pelo Laboratório de Inovação da OAB Paraná, em conjunto com as comissões de <a className="font-semibold text-[#155b3d] underline decoration-[#9fb9aa] underline-offset-4 hover:decoration-current" href="https://www.oabpr.org.br/comissoes/" target="_blank" rel="noreferrer">Direito Digital e Proteção de Dados ↗</a>, <a className="font-semibold text-[#155b3d] underline decoration-[#9fb9aa] underline-offset-4 hover:decoration-current" href="https://www.oabpr.org.br/comissoes/" target="_blank" rel="noreferrer">Inteligência Artificial ↗</a>, <a className="font-semibold text-[#155b3d] underline decoration-[#9fb9aa] underline-offset-4 hover:decoration-current" href="https://www.oabpr.org.br/comissoes/" target="_blank" rel="noreferrer">Direito Eleitoral ↗</a> e <a className="font-semibold text-[#155b3d] underline decoration-[#9fb9aa] underline-offset-4 hover:decoration-current" href="https://www.oabpr.org.br/comissoes/" target="_blank" rel="noreferrer">Inovação, Gestão e Empreendedorismo ↗</a>.</p>
+        <p className="mt-3 max-w-[55rem] text-sm leading-relaxed text-muted">A edição teve o patrocínio da <a className="font-semibold text-[#155b3d] underline decoration-[#9fb9aa] underline-offset-4 hover:decoration-current" href="https://www.igual.com/" target="_blank" rel="noreferrer">Igual ↗</a>. O <a className="font-semibold text-[#155b3d] underline decoration-[#9fb9aa] underline-offset-4 hover:decoration-current" href="https://www.tre-pr.jus.br/comunicacao/noticias/2026/Agosto/oab-pr-abre-inscricoes-para-o-hackathon-da-cidadania" target="_blank" rel="noreferrer">TRE-PR ↗</a> participou como parceiro institucional da categoria Eleitoral e Cidadania.</p>
+        <p className="mt-3 max-w-[55rem] text-sm leading-relaxed text-muted">A MindTheGap agradece à OAB Paraná, às comissões organizadoras, à Igual e a todas as pessoas envolvidas pela organização cuidadosa, pela acolhida às equipes e pela oportunidade de transformar uma ideia em um projeto funcional.</p>
+      </section>
+
       <section className="overflow-hidden rounded-2xl bg-[#073a27] px-6 py-8 text-white sm:px-8 sm:py-10" aria-labelledby="conquista-titulo">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
           <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-[#c9ff36] text-[#073a27]">
@@ -46,6 +54,24 @@ export function Hackathon() {
         </article>
       </section>
 
+      <section className="mt-10 rounded-2xl border border-[var(--border)] bg-white p-6 sm:p-8" aria-labelledby="repositorio-titulo">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#356149]">Código aberto</p>
+        <h2 className="fonte-display mt-2 text-2xl font-bold" id="repositorio-titulo">Conheça o projeto por dentro</h2>
+        <p className="mt-3 max-w-[52rem] text-sm leading-relaxed text-muted">A Amparo auxilia profissionais do Direito na preparação de ações para fornecimento de medicamentos pelo poder público. O repositório reúne o código, as regras implementadas e a documentação usada para construir o protótipo.</p>
+
+        <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Fluxo da aplicação">
+          {["Documentos do caso", "Conferência dos dados", "Achados e requisitos", "Dossiê e minutas"].map((item, indice) => (
+            <li className="rounded-xl bg-[#f1f6f3] p-4 text-sm font-semibold" key={item}>
+              <span className="mb-2 block text-xs text-[#356149]">{String(indice + 1).padStart(2, "0")}</span>
+              {item}
+            </li>
+          ))}
+        </ol>
+
+        <p className="mt-5 text-sm leading-relaxed text-muted"><strong className="text-foreground">Tecnologias:</strong> React, TypeScript, Fastify, PostgreSQL com pgvector e serviços de anonimização e inteligência artificial. Nesta demonstração, os dados são fictícios e nenhum serviço pago é executado.</p>
+        <a className="controle mt-6 inline-flex items-center rounded-lg bg-[#073a27] px-5 text-sm font-semibold text-white hover:bg-[#0b4a33]" href="https://github.com/mdgap/amparo" target="_blank" rel="noreferrer">Ver código e documentação no GitHub ↗</a>
+      </section>
+
       <section className="mt-10" aria-labelledby="equipe-titulo">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#356149]">Quem construiu</p>
         <h2 className="fonte-display mt-2 text-2xl font-bold" id="equipe-titulo">Equipe MindTheGap</h2>
@@ -53,7 +79,7 @@ export function Hackathon() {
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {EQUIPE.map((integrante) => (
             <article className="cartao flex items-center gap-4 p-5" key={integrante.nome}>
-              <img className="size-20 shrink-0 rounded-full object-cover ring-2 ring-[#dbe6df]" src={integrante.foto} alt={`Foto de ${integrante.nome}`} width="80" height="80" />
+              <img className={`size-20 shrink-0 rounded-full object-cover ring-2 ring-[#dbe6df] ${integrante.nome === "Geraldo Baranoski" ? "object-[50%_22%]" : ""}`} src={integrante.foto} alt={`Foto de ${integrante.nome}`} width="80" height="80" />
               <div className="min-w-0">
                 <p className="fonte-display font-bold">{integrante.nome}</p>
                 <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-[#356149]">{integrante.papel}</p>
