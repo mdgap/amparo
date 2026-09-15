@@ -209,7 +209,7 @@ export function Painel({ catalogo, abrindo, onAbrir, onNovoCaso, demonstracao }:
               </p>
             </div>
 
-            <div className="cartao overflow-x-auto">
+            <div className="cartao contain-[paint] overflow-x-auto">
               <table className="w-full min-w-[48rem] text-left text-sm">
                 <thead className="border-b border-[var(--border)] text-[0.6875rem] uppercase tracking-[0.0625rem] text-muted">
                   <tr>

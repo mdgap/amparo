@@ -48,13 +48,13 @@ export function Shell({ etapa, liberadas, onIr, children, bloqueada = false }: P
 
       <aside
         aria-label="Etapas da análise"
-        className="sticky top-0 z-10 grid grid-cols-[1fr_auto_auto_auto] items-center gap-1 border-b border-[var(--sidebar-border)] bg-[var(--sidebar)] px-3 py-2 lg:flex lg:h-dvh lg:flex-col lg:items-stretch lg:border-b-0 lg:border-e lg:px-4 lg:pb-6 lg:pt-8"
+        className="sticky top-0 z-10 grid grid-cols-3 items-center gap-1 border-b border-[var(--sidebar-border)] bg-[var(--sidebar)] px-3 py-2 lg:flex lg:h-dvh lg:flex-col lg:items-stretch lg:border-b-0 lg:border-e lg:px-4 lg:pb-6 lg:pt-8"
       >
         {/* Logo escura: a lateral é clara. A versão clara fica em public/ para
             superfícies escuras. */}
         <button
           aria-label="Amparo: voltar ao Painel de casos"
-          className="self-start rounded-lg px-1 lg:px-3"
+          className="hidden self-start rounded-lg px-1 lg:block lg:px-3"
           type="button"
           disabled={bloqueada}
           onClick={() => onIr("painel")}
@@ -70,7 +70,7 @@ export function Shell({ etapa, liberadas, onIr, children, bloqueada = false }: P
 
         <button
           aria-current={etapa === "painel" ? "page" : undefined}
-          className={`flex items-center gap-1.5 rounded-[0.5625rem] px-2 py-2 text-left transition-colors lg:mt-8 lg:min-h-[3rem] lg:gap-2.5 lg:rounded-[0.8125rem] lg:px-3
+          className={`flex w-full items-center justify-center gap-1.5 rounded-[0.5625rem] px-2 py-2 text-left transition-colors lg:mt-8 lg:min-h-[3rem] lg:justify-start lg:gap-2.5 lg:rounded-[0.8125rem] lg:px-3
             ${etapa === "painel"
               ? "gradiente-acao shadow-[0_5px_16px_rgba(0,165,99,0.13)]"
               : "hover:bg-[var(--sidebar-hover)]"}`}
@@ -124,7 +124,7 @@ export function Shell({ etapa, liberadas, onIr, children, bloqueada = false }: P
         <div className="contents lg:mt-auto lg:flex lg:flex-col lg:gap-1">
           <button
             aria-current={etapa === "hackathon" ? "page" : undefined}
-            className={`flex items-center gap-1.5 rounded-[0.5625rem] px-2 py-2 text-left transition-colors lg:gap-2.5 lg:rounded-[0.8125rem] lg:px-3 lg:py-3
+            className={`flex w-full items-center justify-center gap-1.5 rounded-[0.5625rem] px-2 py-2 text-left transition-colors lg:justify-start lg:gap-2.5 lg:rounded-[0.8125rem] lg:px-3 lg:py-3
               ${etapa === "hackathon"
                 ? "gradiente-acao shadow-[0_5px_16px_rgba(0,165,99,0.13)]"
                 : "hover:bg-[var(--sidebar-hover)]"}`}
@@ -141,7 +141,7 @@ export function Shell({ etapa, liberadas, onIr, children, bloqueada = false }: P
 
           <button
           aria-current={etapa === "sobre" ? "page" : undefined}
-          className={`flex items-center gap-1.5 rounded-[0.5625rem] px-2 py-2 text-left transition-colors lg:gap-2.5 lg:rounded-[0.8125rem] lg:px-3 lg:py-3
+          className={`flex w-full items-center justify-center gap-1.5 rounded-[0.5625rem] px-2 py-2 text-left transition-colors lg:justify-start lg:gap-2.5 lg:rounded-[0.8125rem] lg:px-3 lg:py-3
             ${etapa === "sobre"
               ? "gradiente-acao shadow-[0_5px_16px_rgba(0,165,99,0.13)]"
               : "hover:bg-[var(--sidebar-hover)]"}`}
