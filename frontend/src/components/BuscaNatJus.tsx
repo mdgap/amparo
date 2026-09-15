@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Button, Input, Label, Spinner, TextField } from "@heroui/react";
 import { api } from "../lib/api.ts";
+import { DEMO } from "../demo/ativo.ts";
+import { baixarExemplo } from "../demo/download.ts";
 
 type Nota = { id: number; cid: string; uf: string; finalizadaEm: string; url: string };
 
@@ -66,6 +68,7 @@ export function BuscaNatJus({ onImportar }: { onImportar: (texto: string) => voi
 
   return (
     <div className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] p-4">
+      {DEMO && <p className="mb-3 text-xs text-muted">Busca simulada. Os resultados são documentos fictícios da demonstração, sem emissão pelo CNJ ou pelo NAT-Jus. Ex.: acolhix.</p>}
       <div className="flex flex-wrap items-end gap-3">
         <TextField className="min-w-52 flex-1" value={termo} onChange={setTermo}
           onKeyDown={(e) => { if (e.key === "Enter") void buscar(); }}>
@@ -97,7 +100,11 @@ export function BuscaNatJus({ onImportar }: { onImportar: (texto: string) => voi
           <ul className="mt-3 flex max-h-64 flex-col gap-2 overflow-y-auto">
             {notas.map((n) => (
               <li key={n.id} className="flex flex-wrap items-center gap-2">
-                <a
+                {DEMO ? <button type="button" className="controle min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-surface px-4 py-2 text-left text-sm" onClick={async () => {
+                  setImportando(n.id);
+                  try { const r = await api.notaNatjus(n.id); await baixarExemplo(r.texto, `evidencia-${n.id}`); }
+                  catch { setErro("Não foi possível baixar o exemplo."); } finally { setImportando(null); }
+                }}>Baixar documento fictício: {n.cid}</button> : <a
                   className="controle flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[var(--border)] bg-surface px-4 py-2 text-sm hover:bg-[var(--surface-tertiary)]"
                   href={n.url}
                   rel="noreferrer"
@@ -107,7 +114,7 @@ export function BuscaNatJus({ onImportar }: { onImportar: (texto: string) => voi
                   <span className="min-w-0 flex-1 truncate">{n.cid}</span>
                   <span className="text-muted">NatJus {n.uf}</span>
                   <span className="num text-muted">{n.finalizadaEm}</span>
-                </a>
+                </a>}
                 <Button
                   className="controle shrink-0"
                   isPending={importando === n.id}

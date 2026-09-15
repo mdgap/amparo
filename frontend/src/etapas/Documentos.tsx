@@ -6,6 +6,9 @@ import {
 } from "../components/Icones.tsx";
 import { BuscaNatJus } from "../components/BuscaNatJus.tsx";
 import { api } from "../lib/api.ts";
+import { DEMO } from "../demo/ativo.ts";
+import { cenarioAtual } from "../demo/api.ts";
+import { baixarExemplo } from "../demo/download.ts";
 import {
   CAMPOS_DOCUMENTO, CASO_EXEMPLO, temCpf, type Documentos as Docs,
 } from "../lib/caso.ts";
@@ -38,7 +41,7 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
   return (
     <>
       <Cabecalho
-        descricao="Envie ou cole o texto de cada peça do caso. Laudo e pedido administrativo são obrigatórios."
+        descricao={DEMO ? "Documentos fictícios já preenchidos. O envio de arquivo demonstra a interação e carrega um exemplo, sem ler ou transmitir seu arquivo." : "Envie ou cole o texto de cada peça do caso. Laudo e pedido administrativo são obrigatórios."}
         passo="Etapa 1 de 4"
         etapaAtual={1}
         titulo="Documentos do caso"
@@ -56,8 +59,9 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
 
       <p className="mb-5 flex items-center gap-3 rounded-[0.5625rem] border border-[var(--border)] bg-[#eaf1ed] px-4 py-3 text-xs text-[#214832]">
         <IconeEscudo className="size-[1.125rem] shrink-0" />
-        Os documentos são anonimizados automaticamente: nome, CPF, cartão do SUS
+        {DEMO ? "A demo usa apenas exemplos preparados. Nenhum serviço de anonimização é executado. Use os downloads para conhecer os documentos fictícios." : <>Os documentos são anonimizados automaticamente: nome, CPF, cartão do SUS
         e contatos viram marcadores antes de qualquer análise.
+        </>}
       </p>
 
       {/* Os dois obrigatórios ficam lado a lado; os opcionais, abaixo. */}
@@ -65,6 +69,7 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
         {CAMPOS_DOCUMENTO.filter((c) => c.obrigatorio).map((campo) => (
           <CampoDocumento
             key={campo.id}
+            campo={campo.id}
             ajuda={campo.ajuda}
             obrigatorio
             rotulo={campo.rotulo}
@@ -78,6 +83,7 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
         {CAMPOS_DOCUMENTO.filter((c) => !c.obrigatorio).map((campo) => (
           <CampoDocumento
             key={campo.id}
+            campo={campo.id}
             ajuda={campo.ajuda}
             buscaNatJus={campo.id === "notaENatJus"}
             obrigatorio={false}
@@ -108,22 +114,24 @@ export function Documentos({ documentos, onMudar, onExemplo, onAvancar }: Props)
       </div>
 
       <p className="mt-5 max-w-[59rem] text-[0.625rem] leading-relaxed text-muted">
-        O texto dos documentos é usado apenas durante a análise e não é
+        {DEMO ? "Os exemplos ficam na memória desta aba. As respostas documentais são preparadas e não mudam por interpretação de texto. Arquivos selecionados são ignorados." : <>O texto dos documentos é usado apenas durante a análise e não é
         armazenado. Nome, CPF, cartão do SUS e contato são substituídos por
         marcador antes de qualquer envio ao modelo. O caso sintético serve para
         demonstração.
+        </>}
       </p>
     </>
   );
 }
 
 function CampoDocumento({
-  rotulo, ajuda, obrigatorio, valor, buscaNatJus = false, onMudar,
+  rotulo, ajuda, obrigatorio, valor, campo, buscaNatJus = false, onMudar,
 }: {
   rotulo: string;
   ajuda: string;
   obrigatorio: boolean;
   valor: string;
+  campo: keyof Docs;
   buscaNatJus?: boolean;
   onMudar: (v: string) => void;
 }) {
@@ -133,6 +141,7 @@ function CampoDocumento({
   const preenchido = valor.trim().length > 0;
 
   const [lendo, setLendo] = useState(false);
+  const [baixando, setBaixando] = useState(false);
   const [avisoDoArquivo, setAvisoDoArquivo] = useState<string | null>(null);
 
   /**
@@ -142,16 +151,16 @@ function CampoDocumento({
   async function lerArquivo(arquivo: File | undefined) {
     if (!arquivo) return;
     setAvisoDoArquivo(null);
-    if (!arquivo.name.toLowerCase().endsWith(".pdf")) {
+    if (!DEMO && !arquivo.name.toLowerCase().endsWith(".pdf")) {
       onMudar(await arquivo.text());
       return;
     }
     setLendo(true);
     try {
-      const r = await api.documento(arquivo);
+      const r = await api.documento(arquivo, campo);
       onMudar(r.texto);
       setAvisoDoArquivo(
-        r.origem === "ocr"
+        DEMO ? "Envio simulado concluído. Seu arquivo não foi lido nem enviado; o texto abaixo pertence ao cenário fictício." : r.origem === "ocr"
           ? `PDF digitalizado: texto obtido por OCR (${r.paginas} pág., confiança ${r.confianca}%). Confira antes de seguir: OCR erra.`
           : `PDF lido: ${r.paginas} página(s).`,
       );
@@ -186,6 +195,12 @@ function CampoDocumento({
       <p className="mb-4 min-h-[1.1875rem] text-xs text-muted">{ajuda}</p>
 
       {buscaNatJus && <BuscaNatJus onImportar={onMudar} />}
+
+      {DEMO && <Button className="mb-3" size="sm" variant="secondary" isPending={baixando} onPress={async () => {
+        setBaixando(true);
+        try { await baixarExemplo(cenarioAtual().documentos[campo] || "O cenário não inclui este documento.", campo); }
+        finally { setBaixando(false); }
+      }}>Baixar exemplo fictício</Button>}
 
       <div
         className={`flex items-center gap-2.5 rounded-[0.5625rem] border border-dashed px-3 py-3 transition-colors

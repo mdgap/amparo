@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { IconeCalculadora, IconeChevron, IconeEscudo, IconeInfo } from "./Icones.tsx";
 import { api, type PontoDeIA } from "../lib/api.ts";
+import { DEMO } from "../demo/ativo.ts";
 
 /**
  * Ajuda contextual sobre onde a IA atua — feita para auditoria.
@@ -83,6 +84,7 @@ export function AjudaIA({
       </summary>
 
       <div className="mt-3 rounded-[0.5625rem] border border-[var(--border)] bg-[var(--surface-secondary)] p-4 text-[0.8125rem] leading-relaxed">
+        {DEMO && <p className="mb-4 rounded-lg border border-[#dca6a9] bg-[#fff0ee] p-3">Referência da implementação oficial. Os templates abaixo pertencem ao snapshot do código de 13/09/2026. Nenhum modelo foi executado nesta demonstração.</p>}
         <p className="mb-3 inline-flex items-center gap-1.5 rounded-[0.375rem] border border-[#d7ded9] bg-[#eef1ef] px-2 py-1 text-[0.6875rem] text-[#536259]">
           <Icone className="size-3.5" />
           {naturezaTexto}
@@ -119,8 +121,7 @@ export function AjudaIA({
           {dados.template && (
             <Secao titulo="Template da mensagem">
               <p className="mb-2 text-xs text-muted">
-                Template atual da aplicação, com placeholders no lugar dos
-                documentos. Origem: <code>{dados.arquivo}</code>
+                {DEMO ? "Template de referência, não executado, com placeholders. " : "Template atual da aplicação, com placeholders no lugar dos documentos. "}Origem: <code>{dados.arquivo}</code>
               </p>
               <Bloco texto={dados.template} />
             </Secao>

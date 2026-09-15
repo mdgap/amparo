@@ -13,6 +13,10 @@ import {
   api, type Analise, type Passo, type PassoId, type RequisitoTema6,
 } from "./lib/api.ts";
 import { historicoApi } from "./lib/historico.ts";
+import { DEMO } from "./demo/ativo.ts";
+import { BarraDemo, ControlesDemo, GaleriaDemo } from "./demo/Demo.tsx";
+import { CENARIOS, entradaDoCenario, type Cenario } from "./demo/cenarios.ts";
+import { cenarioDoHistorico, configurarSimulacao, criarAnalise, entradaDoHistorico, reiniciarDemo, selecionarCenario, type Simulacao } from "./demo/api.ts";
 import {
   CASO_EXEMPLO, DOCUMENTOS_VAZIOS, MEDICAMENTO_VAZIO, PROCESSUAIS_EXEMPLO,
   PROCESSUAIS_VAZIOS,
@@ -21,9 +25,12 @@ import {
 
 export function App() {
   const [etapa, setEtapa] = useState<EtapaId>("painel");
-  const [documentos, setDocumentos] = useState<Docs>(DOCUMENTOS_VAZIOS);
-  const [medicamento, setMedicamento] = useState<DadosMedicamento>(MEDICAMENTO_VAZIO);
-  const [processuais, setProcessuais] = useState<DadosProcessuais>(PROCESSUAIS_VAZIOS);
+  const [documentos, setDocumentos] = useState<Docs>(() => DEMO ? structuredClone(CENARIOS[0]!.documentos) : DOCUMENTOS_VAZIOS);
+  const [medicamento, setMedicamento] = useState<DadosMedicamento>(() => DEMO ? structuredClone(CENARIOS[0]!.medicamento) : MEDICAMENTO_VAZIO);
+  const [processuais, setProcessuais] = useState<DadosProcessuais>(() => DEMO ? structuredClone(CENARIOS[0]!.processuais) : PROCESSUAIS_VAZIOS);
+  const [cenario, setCenario] = useState(CENARIOS[0]!);
+  const [modoDemo, setModoDemo] = useState<Simulacao>("normal");
+  const [sessaoDemo, setSessaoDemo] = useState(0);
   const [catalogo, setCatalogo] = useState<RequisitoTema6[]>([]);
   const [analise, setAnalise] = useState<Analise | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -56,8 +63,22 @@ export function App() {
   }
 
   function novoCaso() {
+    if (DEMO) { carregarDemo(cenario); return; }
     limparCaso();
     setEtapa("documentos");
+  }
+
+  function carregarDemo(c: Cenario, resultado?: Analise) {
+    limparCaso();
+    selecionarCenario(c.id);
+    setCenario(c);
+    setModoDemo("normal");
+    setDocumentos(structuredClone(c.documentos));
+    setMedicamento(structuredClone(c.medicamento));
+    setProcessuais(structuredClone(c.processuais));
+    setAnalise(resultado ?? null);
+    setEtapa(resultado ? "achados" : "documentos");
+    setSessaoDemo((s) => s + 1);
   }
 
   async function abrir(id: number) {
@@ -65,6 +86,15 @@ export function App() {
     setErro(null);
     try {
       const salva = await historicoApi.analise(id);
+      if (DEMO) {
+        const c = cenarioDoHistorico(id);
+        const e = entradaDoHistorico(id);
+        carregarDemo(c, salva);
+        setDocumentos({ ...DOCUMENTOS_VAZIOS, ...e.documentos });
+        setMedicamento({ ...c.medicamento, nome: e.medicamento.nome, precoApresentacao: e.medicamento.precoApresentacao, precoOrigem: e.medicamento.precoOrigem ?? "cmed", unidadesPorApresentacao: e.medicamento.unidadesPorApresentacao, comRegistroAnvisa: e.medicamento.registroAnvisa?.possui ?? true, ...e.posologia });
+        setProcessuais({ conitec: { ...PROCESSUAIS_VAZIOS.conitec, ...e.conitec, desde: e.conitec?.desde ?? "" }, hipossuficiencia: e.hipossuficiencia ?? PROCESSUAIS_VAZIOS.hipossuficiencia });
+        return;
+      }
       limparCaso();
       setAnalise(salva);
       setReaberta({ codigo: salva.codigo, criadoEm: salva.criadoEm });
@@ -115,12 +145,16 @@ export function App() {
       });
     } finally {
       setCarregando(false);
+      if (DEMO && modoDemo === "falha") setModoDemo("normal");
     }
   }
 
   return (
+    <div className={DEMO ? "demo-layout" : undefined}>
+    {DEMO && <BarraDemo />}
     <ProvedorDeAjuda>
-    <Shell etapa={etapa} liberadas={liberadas} onIr={setEtapa}>
+    <Shell etapa={etapa} liberadas={liberadas} onIr={setEtapa} bloqueada={DEMO && carregando}>
+      {DEMO && <ControlesDemo cenario={cenario} modo={modoDemo} ocupado={carregando || abrindo !== null} onCenario={carregarDemo} onModo={(m) => { configurarSimulacao(m); setModoDemo(m); }} onReiniciar={() => { reiniciarDemo(); carregarDemo(CENARIOS[0]!); setEtapa("painel"); }} />}
       {/* Avisos acima do cabeçalho da tela. O <main> não tem respiro no topo
           (quem dá é o Cabeçalho), então o bloco traz o próprio. */}
       {(erro || carregando || (reaberta && (etapa === "achados" || etapa === "dossie"))) && (
@@ -164,6 +198,8 @@ export function App() {
 
       {etapa === "painel" && (
         <Painel
+          key={sessaoDemo}
+          demonstracao={DEMO ? <GaleriaDemo onSimular={carregarDemo} onResultado={(c) => carregarDemo(c, criarAnalise(c, entradaDoCenario(c)))} /> : undefined}
           abrindo={abrindo}
           catalogo={catalogo}
           onAbrir={(id) => void abrir(id)}
@@ -175,9 +211,11 @@ export function App() {
 
       {etapa === "documentos" && (
         <Documentos
+          key={sessaoDemo}
           documentos={documentos}
           onAvancar={() => setEtapa("conferencia")}
           onExemplo={() => {
+            if (DEMO) { carregarDemo(cenario); return; }
             setDocumentos(CASO_EXEMPLO.documentos);
             setMedicamento(CASO_EXEMPLO.medicamento);
             // O caso sintético traz a situação processual preenchida: os dois
@@ -190,6 +228,7 @@ export function App() {
 
       {etapa === "conferencia" && (
         <Conferencia
+          key={sessaoDemo}
           documentos={documentos}
           processuais={processuais}
           onMudarProcessuais={setProcessuais}
@@ -227,11 +266,14 @@ export function App() {
       )}
 
       <footer className="mt-10 border-t border-[var(--border)] pt-6 text-sm text-muted">
+        {DEMO ? "Demonstração com respostas preparadas. Nenhum modelo ou serviço de anonimização é executado. As peças são fictícias e não podem ser usadas em processos." : <>
         Ferramenta de apoio à triagem. As saídas são minutas revisáveis, não
         substituem a conferência do advogado responsável, e o verde nos achados
         indica evidência localizada no documento, nunca aprovação jurídica.
+        </>}
       </footer>
     </Shell>
     </ProvedorDeAjuda>
+    </div>
   );
 }

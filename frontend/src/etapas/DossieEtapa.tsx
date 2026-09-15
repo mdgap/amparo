@@ -5,6 +5,8 @@ import { IconeDossie, IconeOk } from "../components/Icones.tsx";
 import { AjudaIA } from "../components/AjudaIA.tsx";
 import { Fontes } from "../components/Fontes.tsx";
 import type { Dossie, Fonte } from "../lib/api.ts";
+import { DEMO } from "../demo/ativo.ts";
+import { baixarExemplo } from "../demo/download.ts";
 
 const PECAS = [
   { id: "memorandoDeRota", titulo: "Memorando de rota" },
@@ -46,17 +48,22 @@ export function DossieEtapa({
 }) {
   const [peca, setPeca] = useState<PecaId>("memorandoDeRota");
   const [copiada, setCopiada] = useState<string | null>(null);
+  const [baixando, setBaixando] = useState(false);
+  const [erroCopia, setErroCopia] = useState(false);
 
   async function copiar(texto: string, id: string) {
-    await navigator.clipboard.writeText(texto);
-    setCopiada(id);
-    setTimeout(() => setCopiada(null), 2000);
+    setErroCopia(false);
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiada(id);
+      setTimeout(() => setCopiada(null), 2000);
+    } catch { setErroCopia(true); }
   }
 
   return (
     <>
       <Cabecalho
-        descricao="Minutas geradas a partir do corpus oficial. Cada citação precisa ser conferida antes do uso."
+        descricao={DEMO ? "Peças fictícias montadas para demonstrar a experiência. Copie ou baixe o exemplo; ele não tem validade processual." : "Minutas geradas a partir do corpus oficial. Cada citação precisa ser conferida antes do uso."}
         passo="Etapa 4 de 4"
         etapaAtual={4}
         titulo="Dossiê do caso"
@@ -68,8 +75,9 @@ export function DossieEtapa({
           <Alert.Content>
             <Alert.Title>Caso ainda não está pronto para protocolo</Alert.Title>
             <Alert.Description>
-              Há requisitos do Tema 6 sem comprovação. Use o requerimento
+              {DEMO ? "O cenário tem pendências ou um checklist não aplicável. Explore os achados e as providências fictícias antes de continuar." : <>Há requisitos do Tema 6 sem comprovação. Use o requerimento
               administrativo e a lista de pendências antes de ajuizar.
+              </>}
             </Alert.Description>
           </Alert.Content>
         </Alert>
@@ -113,6 +121,11 @@ export function DossieEtapa({
                 {PECAS.find((p) => p.id === peca)?.titulo}
               </h2>
             </div>
+            <div className="flex flex-wrap gap-2">
+            {DEMO && <Button size="sm" variant="secondary" isPending={baixando} onPress={async () => {
+              setBaixando(true);
+              try { await baixarExemplo(dossie[peca], peca); } finally { setBaixando(false); }
+            }}>Baixar peça (.txt)</Button>}
             <Button
               size="sm"
               variant="secondary"
@@ -127,8 +140,11 @@ export function DossieEtapa({
                 "Copiar texto"
               )}
             </Button>
+            </div>
           </header>
           <div className="px-[1.875rem] pb-7 pt-2">
+            {erroCopia && <p role="status" className="mb-3 text-sm text-[var(--status-erro-fg)]">Não foi possível copiar. Selecione o texto ou use o download do exemplo.</p>}
+            {copiada && <span role="status" className="sr-only">Texto copiado</span>}
             <p className="max-w-[78ch] whitespace-pre-wrap text-sm leading-[1.85] text-[#264230]">
               {dossie[peca]}
             </p>
@@ -146,6 +162,10 @@ export function DossieEtapa({
       <section className="mt-6 rounded-2xl border border-[var(--border)] bg-surface p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="fonte-display text-lg font-bold">Pendências do cliente</h2>
+          {DEMO && <Button size="sm" variant="secondary" isPending={baixando} onPress={async () => {
+            setBaixando(true);
+            try { await baixarExemplo(dossie.pendenciasDoCliente.join("\n") || "Nenhuma pendência no cenário preparado.", "pendencias"); } finally { setBaixando(false); }
+          }}>Baixar pendências</Button>}
           <AjudaIA
             destaque={DESTAQUE_POR_PECA.pendencias}
             ponto="dossie"

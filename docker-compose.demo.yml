@@ -1,0 +1,12 @@
+services:
+  demo:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.demo
+    restart: unless-stopped
+    ports:
+      - "${DEMO_BIND:-127.0.0.1}:${DEMO_PORT:-8080}:80"
+    deploy:
+      resources:
+        limits:
+          memory: 96M

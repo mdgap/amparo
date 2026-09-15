@@ -1,3 +1,7 @@
+import { demoApi } from "../demo/api.ts";
+import { DEMO } from "../demo/ativo.ts";
+import type { Documentos } from "./caso.ts";
+
 export interface ResultadoCusto {
   unidadesPorAno: number;
   apresentacoesPorAno: number;
@@ -66,6 +70,7 @@ export interface Anonimizacao {
 
 /** O que foi enviado ao modelo, para auditoria. */
 export interface Prompts {
+  simulada?: boolean;
   modelo: string;
   promptVersao: string;
   temperatura: number;
@@ -200,7 +205,7 @@ export interface PontoDeIA {
   limites: string;
 }
 
-export const api = {
+const apiOficial = {
   analisar: (entrada: EntradaCaso) => post<Analise>("/analise", entrada),
 
   /**
@@ -275,7 +280,7 @@ export const api = {
         evidencias: string[];
       };
     }>("/reconhecer", { laudo, receita }),
-  documento: async (arquivo: File) => {
+  documento: async (arquivo: File, _campo?: keyof Documentos) => {
     const form = new FormData();
     form.append("arquivo", arquivo);
     const r = await fetch("/api/documento", { method: "POST", body: form });
@@ -350,6 +355,8 @@ export const api = {
     };
   },
 };
+
+export const api = DEMO ? demoApi : apiOficial;
 
 export const brl = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

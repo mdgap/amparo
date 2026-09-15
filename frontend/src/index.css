@@ -207,3 +207,31 @@ h1, h2, h3, .fonte-display {
 :where(button:not(:disabled), summary, [role="tab"], label[for]) {
   cursor: pointer;
 }
+
+.demo-layout aside[aria-label="Etapas da análise"] {
+  top: var(--demo-bar-height, 72px);
+}
+
+.demo-layout nav[aria-label="Peças do dossiê"],
+.demo-layout section[aria-label="Documento"] {
+  top: calc(var(--demo-bar-height, 72px) + 20px);
+}
+
+.demo-barra a:focus-visible {
+  outline-color: white;
+}
+
+.demo-carrossel {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.demo-carrossel::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .demo-layout aside[aria-label="Etapas da análise"] {
+    height: calc(100dvh - var(--demo-bar-height, 72px));
+  }
+}

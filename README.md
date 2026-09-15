@@ -165,6 +165,24 @@ Consulte [a arquitetura](docs/ARQUITETURA.md) e [as instruções de implantaçã
 
 ## Executar localmente
 
+### Demonstração pública, sem API ou modelos
+
+O Compose de demonstração sobe somente um container nginx com a interface e seis cenários fictícios. Não inicia API, PostgreSQL, anonimizador nem chamadas à OpenRouter. A porta fica restrita ao computador por padrão:
+
+```bash
+docker compose -f docker-compose.demo.yml up --build -d
+```
+
+Abra [http://127.0.0.1:8080](http://127.0.0.1:8080). Para outro bind ou porta:
+
+```bash
+DEMO_BIND=0.0.0.0 DEMO_PORT=8081 docker compose -f docker-compose.demo.yml up --build -d
+```
+
+No Dokploy, use `docker-compose.demo.yml`, publique somente o serviço `demo` na porta 80 e deixe `DEMO_BIND`/`DEMO_PORT` sem configuração; o proxy da plataforma fala diretamente com a porta do container. Esse Compose não referencia os demais serviços do projeto.
+
+Os exemplos ficam na memória da aba e retornam ao estado inicial ao recarregar. A interface não interpreta documentos alterados e ignora o conteúdo dos arquivos escolhidos. Os downloads recebem uma identificação de demonstração.
+
 As instruções abaixo se baseiam no código `75a3474cd14538beca916e57335a38e3b0ce3bce`, consultado em 12/09/2026. A instalação completa por Docker não foi executada no ensaio funcional. A branch `main` pode conter alterações posteriores.
 
 ### 1. Obter a versão de referência

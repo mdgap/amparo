@@ -1,4 +1,6 @@
 import type { Analise, ResultadoRota } from "./api.ts";
+import { demoHistorico } from "../demo/api.ts";
+import { DEMO } from "../demo/ativo.ts";
 
 /** Erro da API com o status HTTP, para a tela distinguir banco fora do ar de falha comum. */
 export class ErroApi extends Error {
@@ -53,7 +55,7 @@ export type AnaliseReaberta = Analise & {
   reaberta: true;
 };
 
-export const historicoApi = {
+const historicoOficial = {
   metricas: () => lerJson<Metricas>("/metricas"),
 
   historico: ({ limite, antesDe }: { limite: number; antesDe?: number }) =>
@@ -63,3 +65,5 @@ export const historicoApi = {
 
   analise: (id: number) => lerJson<AnaliseReaberta>(`/analises/${id}`),
 };
+
+export const historicoApi = DEMO ? demoHistorico : historicoOficial;

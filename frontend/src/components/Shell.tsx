@@ -23,6 +23,7 @@ interface Props {
   liberadas: Set<EtapaId>;
   onIr: (etapa: EtapaId) => void;
   children: ReactNode;
+  bloqueada?: boolean;
 }
 
 /**
@@ -33,7 +34,7 @@ interface Props {
  * Em tela estreita vira uma faixa horizontal de quatro colunas, preservando a
  * ordem de leitura.
  */
-export function Shell({ etapa, liberadas, onIr, children }: Props) {
+export function Shell({ etapa, liberadas, onIr, children, bloqueada = false }: Props) {
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[14.5rem_minmax(0,1fr)]">
       <a
@@ -53,6 +54,7 @@ export function Shell({ etapa, liberadas, onIr, children }: Props) {
           aria-label="Amparo: voltar ao Painel de casos"
           className="self-start rounded-lg px-1 lg:px-3"
           type="button"
+          disabled={bloqueada}
           onClick={() => onIr("painel")}
         >
           <img
@@ -71,6 +73,7 @@ export function Shell({ etapa, liberadas, onIr, children }: Props) {
               ? "gradiente-acao shadow-[0_5px_16px_rgba(0,165,99,0.13)]"
               : "hover:bg-[var(--sidebar-hover)]"}`}
           type="button"
+          disabled={bloqueada}
           onClick={() => onIr("painel")}
         >
           <IconeBalanca className="size-[1.0625rem] shrink-0 lg:size-5" />
@@ -94,7 +97,7 @@ export function Shell({ etapa, liberadas, onIr, children }: Props) {
                       ? "gradiente-acao shadow-[0_5px_16px_rgba(0,165,99,0.13)]"
                       : "hover:bg-[var(--sidebar-hover)]"}
                     ${disponivel ? "" : "cursor-not-allowed opacity-50"}`}
-                  disabled={!disponivel}
+                  disabled={!disponivel || bloqueada}
                   type="button"
                   onClick={() => onIr(e.id)}
                 >
@@ -125,6 +128,7 @@ export function Shell({ etapa, liberadas, onIr, children }: Props) {
               ? "gradiente-acao shadow-[0_5px_16px_rgba(0,165,99,0.13)]"
               : "hover:bg-[var(--sidebar-hover)]"}`}
           type="button"
+          disabled={bloqueada}
           onClick={() => onIr("sobre")}
         >
           <IconeInfo className="size-[1.0625rem] shrink-0 lg:size-5" />

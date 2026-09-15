@@ -32,10 +32,10 @@ export function Prompts({ prompts }: { prompts: PromptsDaAnalise }) {
         <IconeChevron className="size-5 shrink-0 text-muted" />
         <div>
           <h2 className="fonte-display text-lg font-semibold">
-            Transparência: o que foi enviado ao modelo
+            {prompts.simulada ? "Referência dos prompts (não executados)" : "Transparência: o que foi enviado ao modelo"}
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Os prompts desta análise, na íntegra. Para auditoria.
+            {prompts.simulada ? "Templates da implementação oficial, com placeholders. Nenhum documento desta sessão foi enviado ao modelo." : "Os prompts desta análise, na íntegra. Para auditoria."}
           </p>
         </div>
       </summary>
@@ -48,7 +48,7 @@ export function Prompts({ prompts }: { prompts: PromptsDaAnalise }) {
             { rotulo: "Temperatura", valor: String(prompts.temperatura) },
             {
               rotulo: "Retenção pelo provedor",
-              valor: prompts.zeroDataRetention ? "nenhuma (ZDR)" : "não garantida",
+              valor: prompts.simulada ? "Sem envio ao provedor" : prompts.zeroDataRetention ? "nenhuma (ZDR)" : "não garantida",
             },
           ].map((m) => (
             <div key={m.rotulo}>
@@ -94,9 +94,10 @@ export function Prompts({ prompts }: { prompts: PromptsDaAnalise }) {
         ))}
 
         <p className="border-t border-[var(--border)] pt-4 text-sm text-muted">
-          Os documentos aparecem aqui como o modelo os recebeu, já anonimizados.
+        {prompts.simulada ? "Esta é uma cópia dos templates oficiais para consulta. Os placeholders permanecem vazios; nenhum modelo recebeu documentos desta demonstração." : <>Os documentos aparecem aqui como o modelo os recebeu, já anonimizados.
           Os números de custo, foro e polo passivo chegam prontos, com instrução
-          explícita de não recalcular.
+        explícita de não recalcular.
+        </>}
         </p>
       </div>
     </details>

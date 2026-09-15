@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Alert, Button, Spinner } from "@heroui/react";
 import { Cabecalho } from "../components/Cabecalho.tsx";
 import { ESTADOS } from "../components/Estado.tsx";
@@ -7,6 +7,7 @@ import {
 } from "../components/Icones.tsx";
 import { brl, type RequisitoTema6 } from "../lib/api.ts";
 import { historicoApi, type ItemHistorico, type Metricas } from "../lib/historico.ts";
+import { DEMO } from "../demo/ativo.ts";
 
 const POR_PAGINA = 10;
 
@@ -32,6 +33,7 @@ interface Props {
   abrindo: number | null;
   onAbrir: (id: number) => void;
   onNovoCaso: () => void;
+  demonstracao?: ReactNode;
 }
 
 /**
@@ -41,7 +43,7 @@ interface Props {
  * partir do id, pelo medicamento e pela data — não há campo livre de apelido,
  * que seria o lugar mais fácil de alguém digitar um nome.
  */
-export function Painel({ catalogo, abrindo, onAbrir, onNovoCaso }: Props) {
+export function Painel({ catalogo, abrindo, onAbrir, onNovoCaso, demonstracao }: Props) {
   const [metricas, setMetricas] = useState<Metricas | null>(null);
   const [itens, setItens] = useState<ItemHistorico[]>([]);
   const [proximo, setProximo] = useState<number | null>(null);
@@ -95,11 +97,13 @@ export function Painel({ catalogo, abrindo, onAbrir, onNovoCaso }: Props) {
             </Button>
           )
         }
-        descricao="Métricas dos últimos movimentos e o histórico das análises. Nada aqui identifica paciente: cada caso aparece pelo código, pelo medicamento e pela data."
+        descricao={DEMO ? "Histórico fictício desta aba e métricas dos exercícios. Nenhum caso foi analisado por IA; recarregar restaura os seis exemplos." : "Métricas dos últimos movimentos e o histórico das análises. Nada aqui identifica paciente: cada caso aparece pelo código, pelo medicamento e pela data."}
         passo="Painel"
         secao="Painel de casos"
         titulo="Casos analisados"
       />
+
+      {demonstracao}
 
       {situacao === "indisponivel" && (
         <Alert className="mb-6" status="warning">
@@ -146,7 +150,7 @@ export function Painel({ catalogo, abrindo, onAbrir, onNovoCaso }: Props) {
           >
             <Metrica
               Icone={IconeDocumento}
-              detalhe={`${metricas.analisesComIA} com leitura dos documentos por IA`}
+              detalhe={DEMO ? "Exercícios locais; nenhum modelo executado" : `${metricas.analisesComIA} com leitura dos documentos por IA`}
               rotulo="Análises"
               valor={metricas.total.toLocaleString("pt-BR")}
             />
@@ -162,7 +166,7 @@ export function Painel({ catalogo, abrindo, onAbrir, onNovoCaso }: Props) {
               detalhe={
                 metricas.percentualApto === null
                   ? "Nenhuma análise com leitura por IA ainda"
-                  : "Das análises com IA, com os seis requisitos localizados"
+                  : DEMO ? "Dos exercícios com resposta preparada" : "Das análises com IA, com os seis requisitos localizados"
               }
               rotulo="Seis requisitos com evidência"
               valor={
@@ -201,7 +205,7 @@ export function Painel({ catalogo, abrindo, onAbrir, onNovoCaso }: Props) {
                 Últimas análises
               </h2>
               <p className="text-xs text-muted">
-                Documentos e trechos citados não são guardados, por privacidade.
+                {DEMO ? "Exemplos mantidos somente na memória desta aba." : "Documentos e trechos citados não são guardados, por privacidade."}
               </p>
             </div>
 
