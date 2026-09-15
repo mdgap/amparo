@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 import {
-  IconeAchados, IconeBalanca, IconeConferencia, IconeDossie, IconeInfo, IconeUpload,
+  IconeAchados, IconeBalanca, IconeConferencia, IconeDossie, IconeInfo, IconeTrofeu, IconeUpload,
 } from "./Icones.tsx";
 
 /**
  * "painel" é a tela inicial e "sobre" explica o projeto; as outras quatro são
  * as etapas numeradas da análise.
  */
-export type EtapaId = "painel" | "sobre" | "documentos" | "conferencia" | "achados" | "dossie";
+export type EtapaId = "painel" | "sobre" | "hackathon" | "documentos" | "conferencia" | "achados" | "dossie";
 
 export const ETAPAS = [
   { id: "documentos", rotulo: "Documentos", resumo: "Peças do caso", Icone: IconeUpload },
@@ -119,11 +119,27 @@ export function Shell({ etapa, liberadas, onIr, children, bloqueada = false }: P
           })}
         </ol>
 
-        {/* No rodapé da lateral: explica o projeto. O aviso de ferramenta de
-            apoio segue no rodapé de toda tela e dentro desta página. */}
-        <button
+        <div className="mt-3 flex flex-col gap-1 lg:mt-auto">
+          <button
+            aria-current={etapa === "hackathon" ? "page" : undefined}
+            className={`flex items-center gap-2.5 rounded-[0.5625rem] px-3 py-2 text-left transition-colors lg:rounded-[0.8125rem] lg:py-3
+              ${etapa === "hackathon"
+                ? "gradiente-acao shadow-[0_5px_16px_rgba(0,165,99,0.13)]"
+                : "hover:bg-[var(--sidebar-hover)]"}`}
+            type="button"
+            disabled={bloqueada}
+            onClick={() => onIr("hackathon")}
+          >
+            <IconeTrofeu className="size-[1.0625rem] shrink-0 lg:size-5" />
+            <span className="min-w-0">
+              <span className="fonte-display block text-xs font-bold lg:text-sm">O Hackathon</span>
+              <span className="hidden text-[0.6875rem] leading-snug text-[#40554a] lg:block">Nossa equipe e a conquista</span>
+            </span>
+          </button>
+
+          <button
           aria-current={etapa === "sobre" ? "page" : undefined}
-          className={`mt-3 flex items-center gap-2.5 rounded-[0.5625rem] px-3 py-2 text-left transition-colors lg:mt-auto lg:rounded-[0.8125rem] lg:py-3
+          className={`flex items-center gap-2.5 rounded-[0.5625rem] px-3 py-2 text-left transition-colors lg:rounded-[0.8125rem] lg:py-3
             ${etapa === "sobre"
               ? "gradiente-acao shadow-[0_5px_16px_rgba(0,165,99,0.13)]"
               : "hover:bg-[var(--sidebar-hover)]"}`}
@@ -138,7 +154,8 @@ export function Shell({ etapa, liberadas, onIr, children, bloqueada = false }: P
               Como o projeto funciona
             </span>
           </span>
-        </button>
+          </button>
+        </div>
       </aside>
 
       <main className="mx-auto w-full max-w-[77.5rem] px-4 pb-6 lg:px-9 lg:pb-8" id="conteudo">

@@ -3,6 +3,7 @@ import { Alert, Spinner } from "@heroui/react";
 import { Shell, type EtapaId } from "./components/Shell.tsx";
 import { Painel } from "./etapas/Painel.tsx";
 import { Sobre } from "./etapas/Sobre.tsx";
+import { Hackathon } from "./etapas/Hackathon.tsx";
 import { Documentos } from "./etapas/Documentos.tsx";
 import { Conferencia } from "./etapas/Conferencia.tsx";
 import { Achados } from "./etapas/Achados.tsx";
@@ -45,7 +46,7 @@ export function App() {
     api.requisitos().then((r) => setCatalogo(r.requisitos)).catch(() => {});
   }, []);
 
-  const liberadas = new Set<EtapaId>(["painel", "sobre", "documentos"]);
+  const liberadas = new Set<EtapaId>(["painel", "sobre", "hackathon", "documentos"]);
   if (documentos.laudo.trim() || documentos.requerimentoAdministrativo.trim()) {
     liberadas.add("conferencia");
   }
@@ -151,7 +152,7 @@ export function App() {
 
   return (
     <div className={DEMO ? "demo-layout" : undefined}>
-    {DEMO && <BarraDemo />}
+    {DEMO && <BarraDemo onAbrirHackathon={() => { setEtapa("hackathon"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />}
     <ProvedorDeAjuda>
     <Shell etapa={etapa} liberadas={liberadas} onIr={setEtapa} bloqueada={DEMO && carregando}>
       {DEMO && <ControlesDemo cenario={cenario} modo={modoDemo} ocupado={carregando || abrindo !== null} onCenario={carregarDemo} onModo={(m) => { configurarSimulacao(m); setModoDemo(m); }} onReiniciar={() => { reiniciarDemo(); carregarDemo(CENARIOS[0]!); setEtapa("painel"); }} />}
@@ -208,6 +209,8 @@ export function App() {
       )}
 
       {etapa === "sobre" && <Sobre onNovoCaso={novoCaso} />}
+
+      {etapa === "hackathon" && <Hackathon />}
 
       {etapa === "documentos" && (
         <Documentos

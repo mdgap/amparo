@@ -117,6 +117,14 @@ export const IconeInfo = (p: Props) => (
   </Svg>
 );
 
+export const IconeTrofeu = (p: Props) => (
+  <Svg {...p}>
+    <path d="M8 3h8v4a4 4 0 0 1-8 0Z" />
+    <path d="M8 5H4v1a4 4 0 0 0 4 4M16 5h4v1a4 4 0 0 1-4 4" />
+    <path d="M12 11v5m-4 5h8m-6-5h4v5h-4Z" />
+  </Svg>
+);
+
 export const IconeCalculadora = (p: Props) => (
   <Svg {...p}>
     <rect height="20" rx="2" width="16" x="4" y="2" />

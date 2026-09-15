@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from "react";
 import { CENARIOS, type Cenario } from "./cenarios.ts";
 import type { Simulacao } from "./api.ts";
 
-export function BarraDemo() {
+export function BarraDemo({ onAbrirHackathon }: { onAbrirHackathon: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const atualizar = () => document.documentElement.style.setProperty("--demo-bar-height", `${ref.current!.getBoundingClientRect().height}px`);
@@ -13,8 +13,8 @@ export function BarraDemo() {
   }, []);
   return (
     <div ref={ref} className="demo-barra sticky top-0 z-30 overflow-x-auto whitespace-nowrap bg-[#ed1c24] px-4 py-2 text-center text-xs leading-tight text-white" aria-label="Aviso de demonstração">
-      <strong>Demo (POC):</strong> casos, documentos e respostas simulados. Versão oficial:{" "}
-      <a className="break-all font-semibold underline underline-offset-4" href="mailto:oi@paulojalowyj.com">oi@paulojalowyj.com</a>
+      <strong>Demo (POC):</strong> casos, documentos e respostas simulados.{" "}
+      <button className="font-semibold underline underline-offset-4" type="button" onClick={onAbrirHackathon}>Conheça o Amparo →</button>
     </div>
   );
 }

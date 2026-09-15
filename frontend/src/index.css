@@ -217,7 +217,7 @@ h1, h2, h3, .fonte-display {
   top: calc(var(--demo-bar-height, 72px) + 20px);
 }
 
-.demo-barra a:focus-visible {
+.demo-barra :is(a, button):focus-visible {
   outline-color: white;
 }
 
