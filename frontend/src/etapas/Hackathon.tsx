@@ -5,7 +5,7 @@ const EQUIPE = [
   { nome: "Vinícius Brunoni", papel: "Idealizador · Advogado", texto: "Idealização do Amparo, desenvolvimento e conhecimento jurídico.", foto: "/equipe/vinicius-brunoni.jpeg", linkedin: "https://www.linkedin.com/in/vinicius-b-514541287/", github: "https://github.com/brunonivinicius" },
   { nome: "Geraldo Baranoski", papel: "Advogado · Desenvolvedor", texto: "Conhecimento jurídico e desenvolvimento da aplicação.", foto: "/equipe/geraldo-baranoski.jpeg", linkedin: "https://www.linkedin.com/in/geraldobaranoski", github: "https://github.com/geraldobarar" },
   { nome: "Lucas Messias", papel: "Desenvolvedor", texto: "Desenvolvimento e construção da aplicação.", foto: "/equipe/lucas-messias.jpeg", linkedin: "https://www.linkedin.com/in/lucas-maciel-messias-6a370a141/", github: "https://github.com/lucasmessias9898" },
-  { nome: "Paulo Jalowyj", papel: "Tech Lead", texto: "Liderança da equipe, documentação e organização das entregas.", foto: "/equipe/paulo-jalowyj.png", linkedin: "https://www.linkedin.com/in/paulojalowyj", github: "https://github.com/paulojalowyj" },
+  { nome: "Paulo Jalowyj", papel: "Tech Lead", texto: "Liderança técnica, documentação, identidade visual e apresentação do pitch.", foto: "/equipe/paulo-jalowyj.png", linkedin: "https://www.linkedin.com/in/paulojalowyj", github: "https://github.com/paulojalowyj" },
 ] as const;
 
 export function Hackathon() {
